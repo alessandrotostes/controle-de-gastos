@@ -1,66 +1,133 @@
 // src/components/ExpenseForm.js
-import React, { useState } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../firebase"; // Nosso banco de dados
+import React, { useState, useEffect } from "react";
+// Adicionado 'orderBy' à importação
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  query,
+  where,
+  onSnapshot,
+  orderBy,
+} from "firebase/firestore";
+import { db } from "../firebase";
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  NumberInput,
+  NumberInputField,
+  Select,
+  VStack,
+  HStack,
+  Switch,
+} from "@chakra-ui/react";
 
 function ExpenseForm({ usuario }) {
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("");
-  const [categoria, setCategoria] = useState("Alimentação"); // Categoria padrão
+  const [categoria, setCategoria] = useState("");
+  const [userCategories, setUserCategories] = useState([]);
+  const [dividido, setDividido] = useState(false);
+
+  useEffect(() => {
+    if (usuario) {
+      const q = query(
+        collection(db, "categorias"),
+        where("userId", "==", usuario.uid),
+        orderBy("nome")
+      );
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const cats = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setUserCategories(cats);
+      });
+      return () => unsubscribe();
+    }
+  }, [usuario]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (descricao === "" || valor === "") {
-      alert("Por favor, preencha todos os campos");
+    if (descricao === "" || valor === "" || categoria === "") {
+      alert("Por favor, preencha todos os campos, incluindo a categoria.");
       return;
     }
 
     try {
-      // 'addDoc' adiciona um novo documento a uma coleção.
-      // O primeiro argumento é a referência da coleção.
-      // O segundo é o objeto de dados que queremos salvar.
       await addDoc(collection(db, "gastos"), {
-        descricao: descricao,
-        valor: Number(valor), // Garante que o valor seja salvo como número
-        categoria: categoria,
-        data: serverTimestamp(), // Pega a data e hora do servidor
-        userId: usuario.uid, // **MUITO IMPORTANTE: vincula o gasto ao usuário logado**
+        descricao,
+        valor: Number(valor),
+        categoria,
+        dividido: dividido,
+        data: serverTimestamp(),
+        userId: usuario.uid,
       });
 
-      // Limpa o formulário após o envio
       setDescricao("");
       setValor("");
-      setCategoria("Alimentação");
+      setCategoria("");
+      setDividido(false);
     } catch (error) {
       console.error("Erro ao adicionar gasto: ", error);
-      alert("Ocorreu um erro ao adicionar o gasto.");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h3>Adicionar Novo Gasto</h3>
-      <input
-        type="text"
-        value={descricao}
-        onChange={(e) => setDescricao(e.target.value)}
-        placeholder="Descrição"
-      />
-      <input
-        type="number"
-        value={valor}
-        onChange={(e) => setValor(e.target.value)}
-        placeholder="Valor"
-      />
-      <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
-        <option value="Alimentação">Alimentação</option>
-        <option value="Transporte">Transporte</option>
-        <option value="Moradia">Moradia</option>
-        <option value="Lazer">Lazer</option>
-        <option value="Outros">Outros</option>
-      </select>
-      <button type="submit">Adicionar Gasto</button>
-    </form>
+    <Box
+      as="form"
+      onSubmit={handleSubmit}
+      p={4}
+      borderWidth="1px"
+      borderRadius="lg"
+    >
+      <VStack spacing={4}>
+        <FormControl isRequired>
+          <FormLabel>Descrição</FormLabel>
+          <Input
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+            placeholder="Ex: Almoço"
+          />
+        </FormControl>
+        <FormControl isRequired>
+          <FormLabel>Valor (R$)</FormLabel>
+          <NumberInput value={valor} onChange={(v) => setValor(v)}>
+            <NumberInputField placeholder="Ex: 50.00" />
+          </NumberInput>
+        </FormControl>
+        <FormControl isRequired>
+          <FormLabel>Categoria</FormLabel>
+          <Select
+            placeholder="Selecione uma categoria"
+            value={categoria}
+            onChange={(e) => setCategoria(e.target.value)}
+          >
+            {userCategories.map((cat) => (
+              <option key={cat.id} value={cat.nome}>
+                {cat.nome}
+              </option>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl as={HStack} justify="space-between">
+          <FormLabel htmlFor="dividir-gasto" mb="0">
+            Dividir gasto por 2?
+          </FormLabel>
+          <Switch
+            id="dividir-gasto"
+            isChecked={dividido}
+            onChange={(e) => setDividido(e.target.checked)}
+          />
+        </FormControl>
+        <Button type="submit" colorScheme="blue" width="full">
+          Adicionar Gasto
+        </Button>
+      </VStack>
+    </Box>
   );
 }
 

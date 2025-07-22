@@ -1,57 +1,96 @@
-// src/pages/Cadastro.js
+// src/pages/Cadastro.js - CÓDIGO FINAL E CORRETO
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-// Importe a função de criação de usuário do Firebase e nosso 'auth'
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
+import {
+  Box,
+  Button,
+  Flex,
+  FormControl, // Corrigido
+  FormLabel, // Corrigido
+  Heading,
+  Input,
+  Link,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 
 function Cadastro() {
-  // Estados para guardar o e-mail e a senha digitados pelo usuário
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [erro, setErro] = useState(""); // Estado para guardar mensagens de erro
-  const navigate = useNavigate(); // Hook para redirecionar o usuário após o cadastro
+  const [erro, setErro] = useState("");
+  const navigate = useNavigate();
 
-  // Função que é chamada quando o formulário é enviado
   const handleCadastro = async (e) => {
-    e.preventDefault(); // Previne o recarregamento da página
-    setErro(""); // Limpa erros anteriores
-
+    e.preventDefault();
+    setErro("");
     try {
-      // Usa a função do Firebase para criar um novo usuário
       await createUserWithEmailAndPassword(auth, email, senha);
-      // Se o cadastro for bem-sucedido, redireciona o usuário para a página de login
       navigate("/login");
     } catch (error) {
-      // Se houver um erro (ex: e-mail já existe, senha fraca), exibe a mensagem
-      setErro(error.message);
+      setErro(
+        "Ocorreu um erro. Verifique se o e-mail é válido e a senha tem pelo menos 6 caracteres."
+      );
       console.error("Erro no cadastro:", error);
     }
   };
 
   return (
-    <div>
-      <h1>Crie sua Conta</h1>
-      <form onSubmit={handleCadastro}>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Seu e-mail"
-          required
-        />
-        <input
-          type="password"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-          placeholder="Sua senha (mínimo 6 caracteres)"
-          required
-        />
-        <button type="submit">Cadastrar</button>
-      </form>
-      {/* Exibe a mensagem de erro, se houver uma */}
-      {erro && <p style={{ color: "red" }}>{erro}</p>}
-    </div>
+    <Flex align="center" justify="center" minH="100vh" bg="gray.50">
+      <VStack
+        as="form"
+        onSubmit={handleCadastro}
+        spacing={4}
+        w="full"
+        maxW="md"
+        p={8}
+        bg="white"
+        borderRadius="lg"
+        boxShadow="lg"
+      >
+        <Heading as="h1" size="lg" mb={6}>
+          Crie sua Conta
+        </Heading>
+
+        <FormControl isRequired>
+          {" "}
+          {/* Corrigido */}
+          <FormLabel>E-mail</FormLabel> {/* Corrigido */}
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="seu-email@exemplo.com"
+          />
+        </FormControl>
+
+        <FormControl isRequired>
+          {" "}
+          {/* Corrigido */}
+          <FormLabel>Senha</FormLabel> {/* Corrigido */}
+          <Input
+            type="password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            placeholder="Pelo menos 6 caracteres"
+          />
+        </FormControl>
+
+        {erro && <Text color="red.500">{erro}</Text>}
+
+        <Button type="submit" colorScheme="blue" width="full">
+          Cadastrar
+        </Button>
+
+        <Text>
+          Já tem uma conta?{" "}
+          <Link as={RouterLink} to="/login" color="blue.500">
+            Faça Login
+          </Link>
+        </Text>
+      </VStack>
+    </Flex>
   );
 }
 

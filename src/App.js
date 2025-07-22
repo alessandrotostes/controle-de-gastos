@@ -1,55 +1,60 @@
-import { useState, useEffect } from "react"; // Importe useState e useEffect
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth"; // O observador do Firebase
-import { auth } from "./firebase"; // Nosso módulo de autenticação
-import ProtectedRoute from "./components/ProtectedRoute"; // Importa o componente de rota protegida
+// src/App.js - VERSÃO COMPLETA E CORRIGIDA
+import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase";
+import { ChakraProvider } from "@chakra-ui/react";
+import { theme } from "./theme";
+
+// Nossas páginas
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
-import "./App.css";
+import Configuracoes from "./pages/Configuracoes"; // A importação está aqui
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
-  // Estado para guardar o usuário logado. Começa como null.
   const [usuario, setUsuario] = useState(null);
-  // Estado para saber se a verificação inicial já terminou.
   const [loading, setLoading] = useState(true);
 
-  // useEffect é um hook que roda quando o componente é montado.
-  // Perfeito para configurar nosso observador.
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUsuario(currentUser); // Define o usuário (pode ser null se deslogado)
-      setLoading(false); // Marca que a verificação terminou
+      setUsuario(currentUser);
+      setLoading(false);
     });
-
-    // Limpa o observador quando o componente for desmontado
     return () => unsubscribe();
-  }, []); // O array vazio [] garante que isso só rode uma vez
+  }, []);
 
-  // Enquanto a verificação estiver acontecendo, mostramos uma mensagem.
   if (loading) {
     return <div>Carregando...</div>;
   }
-  return (
-    <BrowserRouter>
-      <nav>
-        <Link to="/">Dashboard</Link> | <Link to="/login">Login</Link> |{" "}
-        <Link to="/cadastro">Cadastro</Link>
-      </nav>
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute usuario={usuario}>
-              <Dashboard usuario={usuario} />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/login" element={<Login />} />
-        <Route path="/cadastro" element={<Cadastro />} />
-      </Routes>
-    </BrowserRouter>
+  return (
+    <ChakraProvider theme={theme}>
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute usuario={usuario}>
+                <Dashboard usuario={usuario} />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/login" element={<Login />} />
+          <Route path="/cadastro" element={<Cadastro />} />
+          {/* E o uso da importação está aqui, na nova rota */}
+          <Route
+            path="/configuracoes"
+            element={
+              <ProtectedRoute usuario={usuario}>
+                <Configuracoes usuario={usuario} />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </ChakraProvider>
   );
 }
 

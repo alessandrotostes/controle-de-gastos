@@ -1,9 +1,20 @@
-// src/pages/Login.js
+// src/pages/Login.js - CÓDIGO FINAL E CORRETO
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-// A função de login é a signInWithEmailAndPassword
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
+import {
+  Box,
+  Button,
+  Flex,
+  FormControl, // Corrigido
+  FormLabel, // Corrigido
+  Heading,
+  Input,
+  Link,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -14,41 +25,63 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setErro("");
-
     try {
-      // Usa a função do Firebase para fazer o login
       await signInWithEmailAndPassword(auth, email, senha);
-      // Se o login for bem-sucedido, redireciona para o Dashboard
       navigate("/");
     } catch (error) {
-      // Trata erros comuns como senha incorreta ou usuário não encontrado
       setErro("E-mail ou senha inválidos.");
       console.error("Erro no login:", error);
     }
   };
 
   return (
-    <div>
-      <h1>Login</h1>
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Seu e-mail"
-          required
-        />
-        <input
-          type="password"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-          placeholder="Sua senha"
-          required
-        />
-        <button type="submit">Entrar</button>
-      </form>
-      {erro && <p style={{ color: "red" }}>{erro}</p>}
-    </div>
+    <Flex align="center" justify="center" minH="100vh" bg="gray.50">
+      <VStack
+        as="form"
+        onSubmit={handleLogin}
+        spacing={4}
+        w="full"
+        maxW="md"
+        p={8}
+        bg="white"
+        borderRadius="lg"
+        boxShadow="lg"
+      >
+        <Heading as="h1" size="lg" mb={6}>
+          Entrar na sua Conta
+        </Heading>
+
+        <FormControl isRequired>
+          {" "}
+          {/* Corrigido */}
+          <FormLabel>E-mail</FormLabel> {/* Corrigido */}
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="seu-email@exemplo.com"
+          />
+        </FormControl>
+
+        <FormControl isRequired>
+          {" "}
+          {/* Corrigido */}
+          <FormLabel>Senha</FormLabel> {/* Corrigido */}
+          <Input
+            type="password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            placeholder="Sua senha"
+          />
+        </FormControl>
+
+        {erro && <Text color="red.500">{erro}</Text>}
+
+        <Button type="submit" colorScheme="blue" width="full">
+          Entrar
+        </Button>
+      </VStack>
+    </Flex>
   );
 }
 
