@@ -1,6 +1,5 @@
-// src/components/BudgetManager.js
 import React, { useState, useEffect, useCallback } from "react";
-import { db, auth } from "../firebase";
+import { db } from "../firebase";
 import {
   doc,
   getDoc,
@@ -42,7 +41,21 @@ function BudgetManager({ usuario }) {
     selectedDate.getMonth() + 1
   ).padStart(2, "0")}`;
 
-  // Buscar as categorias do utilizador
+  const fetchBudget = useCallback(async () => {
+    setLoading(true);
+    const budgetDocRef = doc(db, "orcamentos", budgetDocId);
+    const docSnap = await getDoc(budgetDocRef);
+    if (docSnap.exists()) {
+      const budgetData = docSnap.data();
+      setTotalBudget(budgetData.valorTotal || "");
+      setCategoryBudgets(budgetData.orcamentosPorCategoria || {});
+    } else {
+      setTotalBudget("");
+      setCategoryBudgets({});
+    }
+    setLoading(false);
+  }, [budgetDocId]);
+
   useEffect(() => {
     const q = query(
       collection(db, "categorias"),
@@ -54,24 +67,6 @@ function BudgetManager({ usuario }) {
     });
     return unsubscribe;
   }, [usuario.uid]);
-
-  // Buscar o orçamento do mês selecionado
-  const fetchBudget = useCallback(async () => {
-    setLoading(true);
-    const budgetDocRef = doc(db, "orcamentos", budgetDocId);
-    const docSnap = await getDoc(budgetDocRef);
-
-    if (docSnap.exists()) {
-      const budgetData = docSnap.data();
-      setTotalBudget(budgetData.valorTotal || "");
-      setCategoryBudgets(budgetData.orcamentosPorCategoria || {});
-    } else {
-      // Se não existe orçamento para o mês, limpa os campos
-      setTotalBudget("");
-      setCategoryBudgets({});
-    }
-    setLoading(false);
-  }, [budgetDocId]);
 
   useEffect(() => {
     fetchBudget();
@@ -87,9 +82,7 @@ function BudgetManager({ usuario }) {
       valorTotal: Number(totalBudget) || 0,
       orcamentosPorCategoria: categoryBudgets,
     };
-
     await setDoc(budgetDocRef, budgetData, { merge: true });
-
     toast({
       title: "Orçamento salvo!",
       status: "success",
@@ -106,7 +99,7 @@ function BudgetManager({ usuario }) {
   };
 
   return (
-    <Box>
+    <Box mb={12}>
       <Heading as="h2" size="lg" mb={6}>
         Definir Orçamento Mensal
       </Heading>
@@ -121,7 +114,6 @@ function BudgetManager({ usuario }) {
           customInput={<Input />}
         />
       </FormControl>
-
       <VStack spacing={6} align="stretch">
         <FormControl>
           <FormLabel>Orçamento Total do Mês (R$)</FormLabel>
@@ -132,7 +124,6 @@ function BudgetManager({ usuario }) {
             <NumberInputField placeholder="Ex: 3000.00" />
           </NumberInput>
         </FormControl>
-
         <Box>
           <Text fontWeight="bold" mb={2}>
             Orçamento por Categoria (Opcional)
@@ -160,7 +151,6 @@ function BudgetManager({ usuario }) {
             ))}
           </SimpleGrid>
         </Box>
-
         <Button
           colorScheme="green"
           onClick={handleSaveBudget}

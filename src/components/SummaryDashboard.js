@@ -16,6 +16,7 @@ import {
   Stat,
   StatLabel,
   StatNumber,
+  Spinner,
   Flex,
   IconButton,
   Text,
@@ -25,6 +26,7 @@ import {
   HStack,
   Button,
   Progress,
+  useColorModeValue,
   Skeleton,
   SkeletonText,
   SkeletonCircle,
@@ -60,6 +62,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
   });
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const hoverBg = useColorModeValue("gray.50", "gray.700");
 
   useEffect(() => {
     if (!usuario) return;
@@ -165,6 +168,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
       new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
     );
   };
+
   const categoryLabels = Object.keys(summaryData.gastosPorCategoria);
   const backgroundColorsKeys = categoryLabels.map(
     (cat) => `${categoryColorMap[cat] || "gray"}.300`
@@ -308,7 +312,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
       {(summaryData.orcamentoTotal > 0 || hasCategoryBudgets) && (
         <Box mb={8} p={4} borderWidth="1px" borderRadius="lg">
           <Heading as="h4" size="md" mb={4}>
-            Provisionamento Mensal
+            Progresso do Orçamento
           </Heading>
           <VStack spacing={4} align="stretch">
             {summaryData.orcamentoTotal > 0 && (
@@ -395,7 +399,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
                   justify="space-between"
                   p={2}
                   borderRadius="md"
-                  _hover={{ bg: "gray.50" }}
+                  _hover={{ bg: hoverBg }}
                 >
                   <Box>
                     <Text fontWeight="medium">{gasto.descricao}</Text>
