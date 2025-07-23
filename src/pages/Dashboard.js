@@ -4,6 +4,11 @@ import { signOut } from "firebase/auth";
 import { auth, db } from "../firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { Link as RouterLink } from "react-router-dom";
+import ExpenseList from "../components/ExpenseList";
+import IncomeList from "../components/IncomeList";
+import SummaryDashboard from "../components/SummaryDashboard";
+import AddExpenseModal from "../components/AddExpenseModal";
+import AddIncomeModal from "../components/AddIncomeModal";
 import {
   Box,
   Button,
@@ -19,17 +24,38 @@ import {
   Tab,
   TabPanel,
   Divider,
+  useDisclosure,
+  useColorMode,
 } from "@chakra-ui/react";
-import { SettingsIcon } from "@chakra-ui/icons";
-
-import ExpenseForm from "../components/ExpenseForm";
-import ExpenseList from "../components/ExpenseList";
-import IncomeForm from "../components/IncomeForm";
-import IncomeList from "../components/IncomeList";
-import SummaryDashboard from "../components/SummaryDashboard";
+import {
+  SettingsIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  SunIcon,
+  MoonIcon,
+  AddIcon,
+} from "@chakra-ui/icons";
+import DatePicker, { registerLocale } from "react-datepicker";
+import { ptBR } from "date-fns/locale/pt-BR";
+registerLocale("pt-BR", ptBR);
 
 function Dashboard({ usuario }) {
   const [categoryColorMap, setCategoryColorMap] = useState({});
+  const [gastosDate, setGastosDate] = useState(new Date());
+  const [ganhosDate, setGanhosDate] = useState(new Date());
+  const { colorMode, toggleColorMode } = useColorMode();
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
+
+  const {
+    isOpen: isExpenseOpen,
+    onOpen: onExpenseOpen,
+    onClose: onExpenseClose,
+  } = useDisclosure();
+  const {
+    isOpen: isIncomeOpen,
+    onOpen: onIncomeOpen,
+    onClose: onIncomeClose,
+  } = useDisclosure();
 
   useEffect(() => {
     if (usuario) {
@@ -48,18 +74,57 @@ function Dashboard({ usuario }) {
     }
   }, [usuario]);
 
+  const handleFabClick = () => {
+    if (activeTabIndex === 1) {
+      // Aba de Gastos (índice 1)
+      onExpenseOpen();
+    } else if (activeTabIndex === 2) {
+      // Aba de Ganhos (índice 2)
+      onIncomeOpen();
+    }
+  };
+
   const handleLogout = async () => {
     await signOut(auth);
   };
+  const goToPreviousGastosMonth = () => {
+    setGastosDate(
+      new Date(gastosDate.getFullYear(), gastosDate.getMonth() - 1, 1)
+    );
+  };
+  const goToNextGastosMonth = () => {
+    setGastosDate(
+      new Date(gastosDate.getFullYear(), gastosDate.getMonth() + 1, 1)
+    );
+  };
+  const goToPreviousGanhosMonth = () => {
+    setGanhosDate(
+      new Date(ganhosDate.getFullYear(), ganhosDate.getMonth() - 1, 1)
+    );
+  };
+  const goToNextGanhosMonth = () => {
+    setGanhosDate(
+      new Date(ganhosDate.getFullYear(), ganhosDate.getMonth() + 1, 1)
+    );
+  };
 
   return (
-    <Box>
-      <Box bg="gray.100" p={4}>
+    <Box pb="6rem">
+      {" "}
+      {/* Adiciona padding em baixo para o FAB não cobrir conteúdo */}
+      <Box bg={colorMode === "light" ? "gray.100" : "gray.700"} p={4}>
         <Flex as="header" align="center">
           <Heading as="h1" size={{ base: "md", md: "lg" }}>
             Painel Financeiro
           </Heading>
           <Spacer />
+          <IconButton
+            icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
+            onClick={toggleColorMode}
+            variant="ghost"
+            aria-label="Alternar modo de cor"
+            mr={2}
+          />
           <IconButton
             as={RouterLink}
             to="/configuracoes"
@@ -76,9 +141,12 @@ function Dashboard({ usuario }) {
           </Button>
         </Flex>
       </Box>
-
       <Container maxW="container.lg" mt={8}>
-        <Tabs isFitted variant="enclosed-colored">
+        <Tabs
+          isFitted
+          variant="enclosed-colored"
+          onChange={(index) => setActiveTabIndex(index)}
+        >
           <TabList mb="1em">
             <Tab>Resumo Mensal</Tab>
             <Tab>Gastos</Tab>
@@ -92,18 +160,109 @@ function Dashboard({ usuario }) {
               />
             </TabPanel>
             <TabPanel>
-              <ExpenseForm usuario={usuario} />
-              <Divider my={8} />
-              <ExpenseList usuario={usuario} />
+              <Flex justify="center" align="center" mb={6}>
+                <IconButton
+                  icon={<ArrowLeftIcon />}
+                  onClick={goToPreviousGastosMonth}
+                  aria-label="Mês anterior"
+                />
+                <Box mx={2}>
+                  <DatePicker
+                    selected={gastosDate}
+                    onChange={(date) => setGastosDate(date)}
+                    dateFormat="MMMM yyyy"
+                    showMonthYearPicker
+                    locale="pt-BR"
+                    customInput={
+                      <Button
+                        as={Heading}
+                        size="lg"
+                        variant="ghost"
+                        w="250px"
+                        textAlign="center"
+                      >
+                        {gastosDate.toLocaleDateString("pt-BR", {
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </Button>
+                    }
+                  />
+                </Box>
+                <IconButton
+                  icon={<ArrowRightIcon />}
+                  onClick={goToNextGastosMonth}
+                  aria-label="Próximo mês"
+                />
+              </Flex>
+              <ExpenseList usuario={usuario} currentDate={gastosDate} />
             </TabPanel>
             <TabPanel>
-              <IncomeForm usuario={usuario} />
-              <Divider my={8} />
-              <IncomeList usuario={usuario} />
+              <Flex justify="center" align="center" mb={6}>
+                <IconButton
+                  icon={<ArrowLeftIcon />}
+                  onClick={goToPreviousGanhosMonth}
+                  aria-label="Mês anterior"
+                />
+                <Box mx={2}>
+                  <DatePicker
+                    selected={ganhosDate}
+                    onChange={(date) => setGanhosDate(date)}
+                    dateFormat="MMMM yyyy"
+                    showMonthYearPicker
+                    locale="pt-BR"
+                    customInput={
+                      <Button
+                        as={Heading}
+                        size="lg"
+                        variant="ghost"
+                        w="250px"
+                        textAlign="center"
+                      >
+                        {ganhosDate.toLocaleDateString("pt-BR", {
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </Button>
+                    }
+                  />
+                </Box>
+                <IconButton
+                  icon={<ArrowRightIcon />}
+                  onClick={goToNextGanhosMonth}
+                  aria-label="Próximo mês"
+                />
+              </Flex>
+              <IncomeList usuario={usuario} currentDate={ganhosDate} />
             </TabPanel>
           </TabPanels>
         </Tabs>
       </Container>
+      {(activeTabIndex === 1 || activeTabIndex === 2) && (
+        <IconButton
+          icon={<AddIcon />}
+          isRound={true}
+          size="lg"
+          colorScheme="blue"
+          position="fixed"
+          bottom="2rem"
+          right="2rem"
+          boxShadow="lg"
+          zIndex="docked"
+          aria-label="Adicionar item"
+          onClick={handleFabClick}
+        />
+      )}
+      <AddExpenseModal
+        isOpen={isExpenseOpen}
+        onClose={onExpenseClose}
+        usuario={usuario}
+      />
+      <AddIncomeModal
+        isOpen={isIncomeOpen}
+        onClose={onIncomeClose}
+        usuario={usuario}
+      />
     </Box>
   );
 }

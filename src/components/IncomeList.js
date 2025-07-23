@@ -1,4 +1,3 @@
-// src/components/IncomeList.js
 import React, { useState, useEffect, useRef } from "react";
 import { db } from "../firebase";
 import {
@@ -10,6 +9,7 @@ import {
   doc,
   deleteDoc,
   updateDoc,
+  Timestamp,
 } from "firebase/firestore";
 import {
   Box,
@@ -54,7 +54,8 @@ const formatDate = (timestamp) => {
   }).format(date);
 };
 
-function IncomeList({ usuario }) {
+// 1. O componente agora recebe 'currentDate'
+function IncomeList({ usuario, currentDate }) {
   const [ganhos, setGanhos] = useState([]);
   const [loading, setLoading] = useState(true);
   const {
@@ -74,19 +75,52 @@ function IncomeList({ usuario }) {
   const toast = useToast();
 
   useEffect(() => {
+    if (!usuario || !currentDate) return;
     setLoading(true);
+
+    // 2. Lógica para definir o início e o fim do mês selecionado
+    const startOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1
+    );
+    const endOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      0,
+      23,
+      59,
+      59
+    );
+    const startTimestamp = Timestamp.fromDate(startOfMonth);
+    const endTimestamp = Timestamp.fromDate(endOfMonth);
+
+    // 3. A consulta agora filtra por data
     const q = query(
       collection(db, "ganhos"),
       where("userId", "==", usuario.uid),
+      where("data", ">=", startTimestamp),
+      where("data", "<=", endTimestamp),
       orderBy("data", "desc")
     );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const items = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
-      setGanhos(items);
-      setLoading(false);
-    });
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const items = snapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        setGanhos(items);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Erro ao buscar ganhos: ", error);
+        setLoading(false);
+      }
+    );
     return () => unsubscribe();
-  }, [usuario.uid]);
+  }, [usuario, currentDate]); // 4. O useEffect agora depende também do 'currentDate'
 
   const handleEditClick = (item) => {
     setItemSelecionado(item);
@@ -132,11 +166,10 @@ function IncomeList({ usuario }) {
 
   return (
     <Box>
-      <Heading as="h3" size="lg" mb={4}>
-        Meus Ganhos
-      </Heading>
       {ganhos.length === 0 ? (
-        <Text>Nenhum ganho registado ainda.</Text>
+        <Text textAlign="center" mt={4}>
+          Nenhum ganho registado para este mês.
+        </Text>
       ) : (
         <VStack spacing={4} align="stretch">
           {ganhos.map((item) => (

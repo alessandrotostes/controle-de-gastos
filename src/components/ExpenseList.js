@@ -1,4 +1,3 @@
-// src/components/ExpenseList.js
 import React, { useState, useEffect, useRef } from "react";
 import {
   collection,
@@ -8,6 +7,8 @@ import {
   orderBy,
   doc,
   deleteDoc,
+  updateDoc,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import {
@@ -42,7 +43,7 @@ const formatDate = (timestamp) => {
   }).format(date);
 };
 
-function ExpenseList({ usuario }) {
+function ExpenseList({ usuario, currentDate }) {
   const [gastos, setGastos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categoryColorMap, setCategoryColorMap] = useState({});
@@ -61,23 +62,61 @@ function ExpenseList({ usuario }) {
   const cancelRef = useRef();
 
   useEffect(() => {
-    if (!usuario) return;
+    if (!usuario || !currentDate) return;
     setLoading(true);
+
+    const startOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1
+    );
+    const endOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      0,
+      23,
+      59,
+      59
+    );
+    const startTimestamp = Timestamp.fromDate(startOfMonth);
+    const endTimestamp = Timestamp.fromDate(endOfMonth);
+
     const q = query(
       collection(db, "gastos"),
       where("userId", "==", usuario.uid),
+      where("data", ">=", startTimestamp),
+      where("data", "<=", endTimestamp),
       orderBy("data", "desc")
     );
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const gastosData = querySnapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-      }));
-      setGastos(gastosData);
-      setLoading(false);
-    });
+
+    const unsubscribe = onSnapshot(
+      q,
+      (querySnapshot) => {
+        let gastosData = querySnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+
+        gastosData.sort((a, b) => {
+          const pagoA = !!a.pago;
+          const pagoB = !!b.pago;
+          if (pagoA !== pagoB) {
+            return pagoA - pagoB;
+          }
+          return 0;
+        });
+
+        setGastos(gastosData);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Erro ao buscar gastos: ", error);
+        setLoading(false);
+      }
+    );
+
     return () => unsubscribe();
-  }, [usuario]);
+  }, [usuario, currentDate]);
 
   useEffect(() => {
     if (usuario) {
@@ -116,15 +155,26 @@ function ExpenseList({ usuario }) {
     onDeleteOpen();
   };
 
+  const handleTogglePago = async (gastoId, pagoAtual) => {
+    const gastoDocRef = doc(db, "gastos", gastoId);
+    try {
+      await updateDoc(gastoDocRef, {
+        pago: !pagoAtual,
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar status de pagamento: ", error);
+    }
+  };
+
   if (loading) return <Spinner />;
 
   return (
     <Box>
-      <Heading as="h3" size="lg" mb={4}>
-        Meus Gastos
-      </Heading>
+      {/* O Título agora é gerido pelo Dashboard */}
       {gastos.length === 0 ? (
-        <Text>Nenhum gasto registado ainda.</Text>
+        <Text textAlign="center" mt={4}>
+          Nenhum gasto registado para este mês.
+        </Text>
       ) : (
         <VStack spacing={4} align="stretch">
           {gastos.map((gasto) => (
@@ -135,10 +185,15 @@ function ExpenseList({ usuario }) {
               borderRadius="lg"
               align={{ base: "flex-start", md: "center" }}
               justify="space-between"
+              opacity={gasto.pago ? 0.6 : 1}
               direction={{ base: "column", md: "row" }}
             >
               <Box flex="1" mb={{ base: 3, md: 0 }} mr={{ md: 4 }}>
-                <Text fontWeight="bold" noOfLines={1}>
+                <Text
+                  fontWeight="bold"
+                  noOfLines={1}
+                  textDecoration={gasto.pago ? "line-through" : "none"}
+                >
                   {gasto.descricao}
                 </Text>
                 <Text fontSize="sm" color="gray.500">
@@ -150,19 +205,30 @@ function ExpenseList({ usuario }) {
                 w={{ base: "full", md: "auto" }}
                 justifyContent="space-between"
               >
-                <VStack align="flex-end" spacing={1}>
+                <VStack align="flex-start" spacing={1}>
                   <Text fontWeight="bold">R$ {gasto.valor.toFixed(2)}</Text>
-                  {gasto.dividido ? (
+                  {gasto.dividido && (
                     <Text fontSize="xs" color="gray.600">
                       (R$ {(gasto.valor / 2).toFixed(2)} p/ pessoa)
                     </Text>
-                  ) : null}
-                  <Tag
-                    colorScheme={categoryColorMap[gasto.categoria] || "gray"}
-                    size="sm"
-                  >
-                    {gasto.categoria}
-                  </Tag>
+                  )}
+                  <HStack>
+                    <Tag
+                      colorScheme={categoryColorMap[gasto.categoria] || "gray"}
+                      size="sm"
+                    >
+                      {gasto.categoria}
+                    </Tag>
+                    <Tag
+                      size="sm"
+                      variant="solid"
+                      colorScheme={gasto.pago ? "green" : "yellow"}
+                      onClick={() => handleTogglePago(gasto.id, gasto.pago)}
+                      cursor="pointer"
+                    >
+                      {gasto.pago ? "Pago" : "Pendente"}
+                    </Tag>
+                  </HStack>
                 </VStack>
                 <VStack>
                   <IconButton
@@ -203,8 +269,6 @@ function ExpenseList({ usuario }) {
       >
         <AlertDialogOverlay>
           <AlertDialogContent>
-            {" "}
-            {/* A etiqueta de fecho aqui estava errada */}
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
               Excluir Gasto
             </AlertDialogHeader>

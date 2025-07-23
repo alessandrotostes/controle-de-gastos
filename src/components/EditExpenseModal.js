@@ -1,6 +1,5 @@
 // src/components/EditExpenseModal.js
 import React, { useState, useEffect } from "react";
-// Adicionado 'orderBy' à importação
 import {
   doc,
   updateDoc,
@@ -30,6 +29,7 @@ import {
   useToast,
   HStack,
   Switch,
+  Checkbox,
 } from "@chakra-ui/react";
 
 function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
@@ -37,6 +37,7 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
   const [valor, setValor] = useState("");
   const [categoria, setCategoria] = useState("");
   const [dividido, setDividido] = useState(false);
+  const [pago, setPago] = useState(true);
   const [userCategories, setUserCategories] = useState([]);
   const toast = useToast();
 
@@ -64,6 +65,7 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
       setValor(gasto.valor);
       setCategoria(gasto.categoria);
       setDividido(gasto.dividido || false);
+      setPago(gasto.pago === undefined ? true : gasto.pago); // Define 'pago', default para true se não existir
     }
   }, [gasto]);
 
@@ -76,6 +78,7 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
         valor: Number(valor),
         categoria,
         dividido: dividido,
+        pago: pago,
       });
       toast({
         title: "Gasto atualizado!",
@@ -139,6 +142,14 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
                 isChecked={dividido}
                 onChange={(e) => setDividido(e.target.checked)}
               />
+            </FormControl>
+            <FormControl>
+              <Checkbox
+                isChecked={pago}
+                onChange={(e) => setPago(e.target.checked)}
+              >
+                Gasto já foi pago?
+              </Checkbox>
             </FormControl>
           </VStack>
         </ModalBody>
