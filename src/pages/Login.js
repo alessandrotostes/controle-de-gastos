@@ -60,7 +60,7 @@ function Login() {
       toast({
         title: "Email de redefinição enviado!",
         description:
-          "Verifique a sua caixa de entrada para definir uma nova palavra-passe.",
+          "Verifique a sua caixa de entrada para definir uma nova palavra-passe. Confira a caixa de spam se não o encontrar.",
         status: "success",
         duration: 5000,
         isClosable: true,
