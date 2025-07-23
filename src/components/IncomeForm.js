@@ -1,9 +1,7 @@
-// src/components/IncomeForm.js
 import React, { useState } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import {
-  Box,
   Button,
   FormControl,
   FormLabel,
@@ -13,7 +11,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 
-function IncomeForm({ usuario, onSuccess }) {
+function IncomeForm({ usuario, onSuccess, selectedDate }) {
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("");
 
@@ -25,7 +23,7 @@ function IncomeForm({ usuario, onSuccess }) {
       await addDoc(collection(db, "ganhos"), {
         descricao,
         valor: Number(valor),
-        data: serverTimestamp(),
+        data: selectedDate, // Usa a data selecionada
         userId: usuario.uid,
       });
       setDescricao("");
@@ -51,7 +49,7 @@ function IncomeForm({ usuario, onSuccess }) {
       <FormControl isRequired>
         <FormLabel>Valor (R$)</FormLabel>
         <NumberInput value={valor} onChange={(v) => setValor(v)}>
-          <NumberInputField placeholder="Ex: 5000.00" />
+          <NumberInputField placeholder="Ex: 500.00" />
         </NumberInput>
       </FormControl>
       <Button type="submit" colorScheme="green" width="full" mt={4}>

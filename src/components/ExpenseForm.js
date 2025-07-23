@@ -1,9 +1,7 @@
-// src/components/ExpenseForm.js
 import React, { useState, useEffect } from "react";
 import {
   collection,
   addDoc,
-  serverTimestamp,
   query,
   where,
   onSnapshot,
@@ -24,7 +22,7 @@ import {
   Checkbox,
 } from "@chakra-ui/react";
 
-function ExpenseForm({ usuario, onSuccess }) {
+function ExpenseForm({ usuario, onSuccess, selectedDate }) {
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -64,7 +62,7 @@ function ExpenseForm({ usuario, onSuccess }) {
         categoria,
         dividido: dividido,
         pago: pago,
-        data: serverTimestamp(),
+        data: selectedDate, // Usa a data selecionada
         userId: usuario.uid,
       });
 

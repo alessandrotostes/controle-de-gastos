@@ -1,14 +1,19 @@
-// src/pages/Dashboard.js
 import React, { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebase";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { Link as RouterLink } from "react-router-dom";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  orderBy,
+} from "firebase/firestore";
 import ExpenseList from "../components/ExpenseList";
 import IncomeList from "../components/IncomeList";
 import SummaryDashboard from "../components/SummaryDashboard";
 import AddExpenseModal from "../components/AddExpenseModal";
 import AddIncomeModal from "../components/AddIncomeModal";
+import { Link as RouterLink } from "react-router-dom";
 import {
   Box,
   Button,
@@ -26,6 +31,11 @@ import {
   Divider,
   useDisclosure,
   useColorMode,
+  HStack,
+  Input,
+  Select,
+  InputGroup,
+  InputRightElement,
 } from "@chakra-ui/react";
 import {
   SettingsIcon,
@@ -34,9 +44,11 @@ import {
   SunIcon,
   MoonIcon,
   AddIcon,
+  CloseIcon,
 } from "@chakra-ui/icons";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { ptBR } from "date-fns/locale/pt-BR";
+
 registerLocale("pt-BR", ptBR);
 
 function Dashboard({ usuario }) {
@@ -45,6 +57,8 @@ function Dashboard({ usuario }) {
   const [ganhosDate, setGanhosDate] = useState(new Date());
   const { colorMode, toggleColorMode } = useColorMode();
   const [activeTabIndex, setActiveTabIndex] = useState(0);
+  const [filtroCategoria, setFiltroCategoria] = useState("");
+  const [filtroTexto, setFiltroTexto] = useState("");
 
   const {
     isOpen: isExpenseOpen,
@@ -61,7 +75,8 @@ function Dashboard({ usuario }) {
     if (usuario) {
       const q = query(
         collection(db, "categorias"),
-        where("userId", "==", usuario.uid)
+        where("userId", "==", usuario.uid),
+        orderBy("nome")
       );
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const colorMap = {};
@@ -76,10 +91,8 @@ function Dashboard({ usuario }) {
 
   const handleFabClick = () => {
     if (activeTabIndex === 1) {
-      // Aba de Gastos (índice 1)
       onExpenseOpen();
     } else if (activeTabIndex === 2) {
-      // Aba de Ganhos (índice 2)
       onIncomeOpen();
     }
   };
@@ -110,12 +123,10 @@ function Dashboard({ usuario }) {
 
   return (
     <Box pb="6rem">
-      {" "}
-      {/* Adiciona padding em baixo para o FAB não cobrir conteúdo */}
       <Box bg={colorMode === "light" ? "gray.100" : "gray.700"} p={4}>
         <Flex as="header" align="center">
           <Heading as="h1" size={{ base: "md", md: "lg" }}>
-            Painel Financeiro
+            Controle Financeiro
           </Heading>
           <Spacer />
           <IconButton
@@ -195,7 +206,45 @@ function Dashboard({ usuario }) {
                   aria-label="Próximo mês"
                 />
               </Flex>
-              <ExpenseList usuario={usuario} currentDate={gastosDate} />
+              <HStack spacing={4} mb={6}>
+                <Select
+                  placeholder="Filtrar por categoria"
+                  value={filtroCategoria}
+                  onChange={(e) => setFiltroCategoria(e.target.value)}
+                >
+                  {Object.keys(categoryColorMap)
+                    .sort()
+                    .map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                </Select>
+                <InputGroup>
+                  <Input
+                    placeholder="Procurar por descrição"
+                    value={filtroTexto}
+                    onChange={(e) => setFiltroTexto(e.target.value)}
+                  />
+                  {filtroTexto && (
+                    <InputRightElement>
+                      <IconButton
+                        icon={<CloseIcon />}
+                        size="xs"
+                        isRound
+                        onClick={() => setFiltroTexto("")}
+                        aria-label="Limpar pesquisa"
+                      />
+                    </InputRightElement>
+                  )}
+                </InputGroup>
+              </HStack>
+              <ExpenseList
+                usuario={usuario}
+                currentDate={gastosDate}
+                filtroCategoria={filtroCategoria}
+                filtroTexto={filtroTexto}
+              />
             </TabPanel>
             <TabPanel>
               <Flex justify="center" align="center" mb={6}>
@@ -238,6 +287,7 @@ function Dashboard({ usuario }) {
           </TabPanels>
         </Tabs>
       </Container>
+
       {(activeTabIndex === 1 || activeTabIndex === 2) && (
         <IconButton
           icon={<AddIcon />}
@@ -253,15 +303,18 @@ function Dashboard({ usuario }) {
           onClick={handleFabClick}
         />
       )}
+
       <AddExpenseModal
         isOpen={isExpenseOpen}
         onClose={onExpenseClose}
         usuario={usuario}
+        selectedDate={gastosDate}
       />
       <AddIncomeModal
         isOpen={isIncomeOpen}
         onClose={onIncomeClose}
         usuario={usuario}
+        selectedDate={ganhosDate}
       />
     </Box>
   );

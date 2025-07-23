@@ -1,4 +1,3 @@
-// src/components/SummaryDashboard.js
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
 import {
@@ -17,7 +16,6 @@ import {
   Stat,
   StatLabel,
   StatNumber,
-  Spinner,
   Flex,
   IconButton,
   Text,
@@ -27,6 +25,9 @@ import {
   HStack,
   Button,
   Progress,
+  Skeleton,
+  SkeletonText,
+  SkeletonCircle,
 } from "@chakra-ui/react";
 import { ArrowLeftIcon, ArrowRightIcon } from "@chakra-ui/icons";
 import { Doughnut } from "react-chartjs-2";
@@ -173,6 +174,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
   );
   const resolvedBackgroundColors = useToken("colors", backgroundColorsKeys);
   const resolvedBorderColors = useToken("colors", borderColorsKeys);
+
   const chartData = {
     labels: categoryLabels,
     datasets: [
@@ -186,7 +188,46 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
     ],
   };
 
-  if (loading) return <Spinner />;
+  if (loading) {
+    return (
+      <Box>
+        <Flex justify="center" align="center" mb={6}>
+          <SkeletonCircle size="10" />
+          <Skeleton height="40px" width="250px" mx={6} />
+          <SkeletonCircle size="10" />
+        </Flex>
+        <SimpleGrid
+          columns={{ base: 2, md: 4 }}
+          spacing={{ base: 3, md: 6 }}
+          mb={8}
+        >
+          <Box p={4} borderWidth="1px" borderRadius="lg">
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="2" />
+          </Box>
+          <Box p={4} borderWidth="1px" borderRadius="lg">
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="2" />
+          </Box>
+          <Box p={4} borderWidth="1px" borderRadius="lg">
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="2" />
+          </Box>
+          <Box p={4} borderWidth="1px" borderRadius="lg">
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="2" />
+          </Box>
+        </SimpleGrid>
+        <Flex direction={{ base: "column", lg: "row" }} gap={8}>
+          <Box flex="1" align="center">
+            <Skeleton height="24px" width="220px" mb={4} />
+            <SkeletonCircle size="250px" />
+          </Box>
+          <Divider orientation={{ base: "horizontal", lg: "vertical" }} />
+          <Box flex="1">
+            <Skeleton height="24px" width="220px" mb={4} />
+            <SkeletonText noOfLines={5} spacing="4" />
+          </Box>
+        </Flex>
+      </Box>
+    );
+  }
 
   const hasCategoryBudgets = Object.values(
     summaryData.orcamentosPorCategoria
@@ -264,14 +305,12 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
         </Stat>
       </SimpleGrid>
 
-      {/* CONDIÇÃO DE EXIBIÇÃO ATUALIZADA */}
       {(summaryData.orcamentoTotal > 0 || hasCategoryBudgets) && (
         <Box mb={8} p={4} borderWidth="1px" borderRadius="lg">
           <Heading as="h4" size="md" mb={4}>
-            Previsionamento Mensal
+            Provisionamento Mensal
           </Heading>
           <VStack spacing={4} align="stretch">
-            {/* O progresso total só aparece se houver um orçamento total */}
             {summaryData.orcamentoTotal > 0 && (
               <Box>
                 <Flex justify="space-between" mb={1}>

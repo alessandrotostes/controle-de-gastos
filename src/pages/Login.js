@@ -1,19 +1,23 @@
-// src/pages/Login.js - CÓDIGO FINAL E CORRETO
 import React, { useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+} from "firebase/auth";
 import { auth } from "../firebase";
 import {
   Box,
   Button,
   Flex,
-  FormControl, // Corrigido
-  FormLabel, // Corrigido
+  FormControl,
+  FormLabel,
   Heading,
   Input,
   Link,
   Text,
   VStack,
+  useColorModeValue,
+  useToast,
 } from "@chakra-ui/react";
 
 function Login() {
@@ -21,6 +25,10 @@ function Login() {
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const navigate = useNavigate();
+  const toast = useToast();
+
+  const pageBg = useColorModeValue("gray.50", "gray.800");
+  const formBg = useColorModeValue("white", "gray.700");
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -34,8 +42,45 @@ function Login() {
     }
   };
 
+  const handlePasswordReset = async () => {
+    if (!email) {
+      toast({
+        title: "Email necessário",
+        description:
+          "Por favor, insira o seu email no campo acima para redefinir a palavra-passe.",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: "Email de redefinição enviado!",
+        description:
+          "Verifique a sua caixa de entrada para definir uma nova palavra-passe.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description:
+          "Não foi possível enviar o email. Verifique se o email está correto.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+    }
+  };
+
   return (
-    <Flex align="center" justify="center" minH="100vh" bg="gray.50">
+    <Flex align="center" justify="center" minH="100vh" bg={pageBg}>
       <VStack
         as="form"
         onSubmit={handleLogin}
@@ -43,7 +88,7 @@ function Login() {
         w="full"
         maxW="md"
         p={8}
-        bg="white"
+        bg={formBg}
         borderRadius="lg"
         boxShadow="lg"
       >
@@ -52,9 +97,7 @@ function Login() {
         </Heading>
 
         <FormControl isRequired>
-          {" "}
-          {/* Corrigido */}
-          <FormLabel>E-mail</FormLabel> {/* Corrigido */}
+          <FormLabel>E-mail</FormLabel>
           <Input
             type="email"
             value={email}
@@ -64,9 +107,7 @@ function Login() {
         </FormControl>
 
         <FormControl isRequired>
-          {" "}
-          {/* Corrigido */}
-          <FormLabel>Senha</FormLabel> {/* Corrigido */}
+          <FormLabel>Senha</FormLabel>
           <Input
             type="password"
             value={senha}
@@ -76,6 +117,12 @@ function Login() {
         </FormControl>
 
         {erro && <Text color="red.500">{erro}</Text>}
+
+        <Flex w="full" justify="flex-end">
+          <Link color="blue.500" onClick={handlePasswordReset} fontSize="sm">
+            Esqueci-me da palavra-passe
+          </Link>
+        </Flex>
 
         <Button type="submit" colorScheme="blue" width="full">
           Entrar

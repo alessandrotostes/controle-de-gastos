@@ -1,16 +1,15 @@
-// src/App.js - VERSÃO COMPLETA E CORRIGIDA
-import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
-import { ChakraProvider } from "@chakra-ui/react";
+import { ChakraProvider, Center, Spinner } from "@chakra-ui/react";
 import { theme } from "./theme";
 
 // Nossas páginas
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
-import Cadastro from "./pages/Cadastro";
-import Configuracoes from "./pages/Configuracoes"; // A importação está aqui
+// import Cadastro from "./pages/Cadastro"; // Já não é necessário
+import Configuracoes from "./pages/Configuracoes";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -26,7 +25,13 @@ function App() {
   }, []);
 
   if (loading) {
-    return <div>Carregando...</div>;
+    return (
+      <ChakraProvider theme={theme}>
+        <Center h="100vh">
+          <Spinner size="xl" />
+        </Center>
+      </ChakraProvider>
+    );
   }
 
   return (
@@ -41,9 +46,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/login" element={<Login />} />
-          <Route path="/cadastro" element={<Cadastro />} />
-          {/* E o uso da importação está aqui, na nova rota */}
           <Route
             path="/configuracoes"
             element={
@@ -52,6 +54,9 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/login" element={<Login />} />
+          {/* A rota de cadastro agora redireciona para o login */}
+          <Route path="/cadastro" element={<Navigate to="/login" />} />
         </Routes>
       </BrowserRouter>
     </ChakraProvider>

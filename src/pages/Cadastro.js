@@ -1,19 +1,22 @@
-// src/pages/Cadastro.js - CÓDIGO FINAL E CORRETO
+// src/pages/Cadastro.js
 import React, { useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
+import { doc, setDoc, collection } from "firebase/firestore";
 import {
   Box,
   Button,
   Flex,
-  FormControl, // Corrigido
-  FormLabel, // Corrigido
+  FormControl,
+  FormLabel,
   Heading,
   Input,
   Link,
   Text,
   VStack,
+  useToast,
+  useColorModeValue, // 1. Importe o hook
 } from "@chakra-ui/react";
 
 function Cadastro() {
@@ -21,12 +24,41 @@ function Cadastro() {
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const navigate = useNavigate();
+  const toast = useToast();
+
+  // 2. Defina as cores dinâmicas
+  const pageBg = useColorModeValue("gray.50", "gray.800");
+  const formBg = useColorModeValue("white", "gray.700");
 
   const handleCadastro = async (e) => {
     e.preventDefault();
     setErro("");
+
     try {
-      await createUserWithEmailAndPassword(auth, email, senha);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        senha
+      );
+      const user = userCredential.user;
+      const familiaDocRef = doc(collection(db, "familias"));
+      await setDoc(familiaDocRef, {
+        nome: `Família de ${email}`,
+        membros: [user.uid],
+      });
+      const userDocRef = doc(db, "usuarios", user.uid);
+      await setDoc(userDocRef, {
+        email: user.email,
+        familiaId: familiaDocRef.id,
+      });
+
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Você já pode fazer o login.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
       navigate("/login");
     } catch (error) {
       setErro(
@@ -37,7 +69,8 @@ function Cadastro() {
   };
 
   return (
-    <Flex align="center" justify="center" minH="100vh" bg="gray.50">
+    // 3. Use as cores dinâmicas
+    <Flex align="center" justify="center" minH="100vh" bg={pageBg}>
       <VStack
         as="form"
         onSubmit={handleCadastro}
@@ -45,7 +78,7 @@ function Cadastro() {
         w="full"
         maxW="md"
         p={8}
-        bg="white"
+        bg={formBg}
         borderRadius="lg"
         boxShadow="lg"
       >
@@ -54,9 +87,7 @@ function Cadastro() {
         </Heading>
 
         <FormControl isRequired>
-          {" "}
-          {/* Corrigido */}
-          <FormLabel>E-mail</FormLabel> {/* Corrigido */}
+          <FormLabel>E-mail</FormLabel>
           <Input
             type="email"
             value={email}
@@ -66,9 +97,7 @@ function Cadastro() {
         </FormControl>
 
         <FormControl isRequired>
-          {" "}
-          {/* Corrigido */}
-          <FormLabel>Senha</FormLabel> {/* Corrigido */}
+          <FormLabel>Senha</FormLabel>
           <Input
             type="password"
             value={senha}
@@ -83,7 +112,7 @@ function Cadastro() {
           Cadastrar
         </Button>
 
-        <Text>
+        <Text pt={4}>
           Já tem uma conta?{" "}
           <Link as={RouterLink} to="/login" color="blue.500">
             Faça Login

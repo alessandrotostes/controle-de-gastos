@@ -16,8 +16,6 @@ import {
   Text,
   VStack,
   HStack,
-  Spinner,
-  Heading,
   IconButton,
   useDisclosure,
   Button,
@@ -41,6 +39,7 @@ import {
   NumberInputField,
   useToast,
   Flex,
+  SkeletonText,
 } from "@chakra-ui/react";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 
@@ -54,7 +53,6 @@ const formatDate = (timestamp) => {
   }).format(date);
 };
 
-// 1. O componente agora recebe 'currentDate'
 function IncomeList({ usuario, currentDate }) {
   const [ganhos, setGanhos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +76,6 @@ function IncomeList({ usuario, currentDate }) {
     if (!usuario || !currentDate) return;
     setLoading(true);
 
-    // 2. Lógica para definir o início e o fim do mês selecionado
     const startOfMonth = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
@@ -95,7 +92,6 @@ function IncomeList({ usuario, currentDate }) {
     const startTimestamp = Timestamp.fromDate(startOfMonth);
     const endTimestamp = Timestamp.fromDate(endOfMonth);
 
-    // 3. A consulta agora filtra por data
     const q = query(
       collection(db, "ganhos"),
       where("userId", "==", usuario.uid),
@@ -120,7 +116,7 @@ function IncomeList({ usuario, currentDate }) {
       }
     );
     return () => unsubscribe();
-  }, [usuario, currentDate]); // 4. O useEffect agora depende também do 'currentDate'
+  }, [usuario, currentDate]);
 
   const handleEditClick = (item) => {
     setItemSelecionado(item);
@@ -162,7 +158,17 @@ function IncomeList({ usuario, currentDate }) {
     });
   };
 
-  if (loading) return <Spinner />;
+  if (loading) {
+    return (
+      <VStack spacing={4} align="stretch">
+        {[...Array(3)].map((_, i) => (
+          <Box key={i} p={4} borderWidth="1px" borderRadius="lg">
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
+          </Box>
+        ))}
+      </VStack>
+    );
+  }
 
   return (
     <Box>

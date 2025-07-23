@@ -17,8 +17,6 @@ import {
   VStack,
   HStack,
   Tag,
-  Spinner,
-  Heading,
   IconButton,
   useDisclosure,
   AlertDialog,
@@ -29,6 +27,7 @@ import {
   AlertDialogOverlay,
   Button,
   Flex,
+  SkeletonText,
 } from "@chakra-ui/react";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import EditExpenseModal from "./EditExpenseModal";
@@ -43,8 +42,9 @@ const formatDate = (timestamp) => {
   }).format(date);
 };
 
-function ExpenseList({ usuario, currentDate }) {
+function ExpenseList({ usuario, currentDate, filtroCategoria, filtroTexto }) {
   const [gastos, setGastos] = useState([]);
+  const [gastosFiltrados, setGastosFiltrados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categoryColorMap, setCategoryColorMap] = useState({});
   const {
@@ -64,7 +64,6 @@ function ExpenseList({ usuario, currentDate }) {
   useEffect(() => {
     if (!usuario || !currentDate) return;
     setLoading(true);
-
     const startOfMonth = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
@@ -80,7 +79,6 @@ function ExpenseList({ usuario, currentDate }) {
     );
     const startTimestamp = Timestamp.fromDate(startOfMonth);
     const endTimestamp = Timestamp.fromDate(endOfMonth);
-
     const q = query(
       collection(db, "gastos"),
       where("userId", "==", usuario.uid),
@@ -88,7 +86,6 @@ function ExpenseList({ usuario, currentDate }) {
       where("data", "<=", endTimestamp),
       orderBy("data", "desc")
     );
-
     const unsubscribe = onSnapshot(
       q,
       (querySnapshot) => {
@@ -96,16 +93,6 @@ function ExpenseList({ usuario, currentDate }) {
           ...doc.data(),
           id: doc.id,
         }));
-
-        gastosData.sort((a, b) => {
-          const pagoA = !!a.pago;
-          const pagoB = !!b.pago;
-          if (pagoA !== pagoB) {
-            return pagoA - pagoB;
-          }
-          return 0;
-        });
-
         setGastos(gastosData);
         setLoading(false);
       },
@@ -114,9 +101,31 @@ function ExpenseList({ usuario, currentDate }) {
         setLoading(false);
       }
     );
-
     return () => unsubscribe();
   }, [usuario, currentDate]);
+
+  useEffect(() => {
+    let dadosFiltrados = [...gastos];
+    if (filtroCategoria) {
+      dadosFiltrados = dadosFiltrados.filter(
+        (gasto) => gasto.categoria === filtroCategoria
+      );
+    }
+    if (filtroTexto) {
+      dadosFiltrados = dadosFiltrados.filter((gasto) =>
+        gasto.descricao.toLowerCase().includes(filtroTexto.toLowerCase())
+      );
+    }
+    dadosFiltrados.sort((a, b) => {
+      const pagoA = !!a.pago;
+      const pagoB = !!b.pago;
+      if (pagoA !== pagoB) {
+        return pagoA - pagoB;
+      }
+      return 0;
+    });
+    setGastosFiltrados(dadosFiltrados);
+  }, [gastos, filtroCategoria, filtroTexto]);
 
   useEffect(() => {
     if (usuario) {
@@ -127,8 +136,7 @@ function ExpenseList({ usuario, currentDate }) {
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const colorMap = {};
         querySnapshot.forEach((doc) => {
-          const category = doc.data();
-          colorMap[category.nome] = category.cor;
+          colorMap[doc.data().nome] = doc.data().cor;
         });
         setCategoryColorMap(colorMap);
       });
@@ -137,47 +145,44 @@ function ExpenseList({ usuario, currentDate }) {
   }, [usuario]);
 
   const handleDelete = async () => {
-    try {
-      await deleteDoc(doc(db, "gastos", idParaExcluir));
-      onDeleteClose();
-    } catch (error) {
-      console.error("Erro ao excluir gasto: ", error);
-    }
+    await deleteDoc(doc(db, "gastos", idParaExcluir));
+    onDeleteClose();
   };
-
   const handleEditClick = (gasto) => {
     setGastoParaEditar(gasto);
     onEditOpen();
   };
-
   const handleDeleteClick = (gastoId) => {
     setIdParaExcluir(gastoId);
     onDeleteOpen();
   };
-
   const handleTogglePago = async (gastoId, pagoAtual) => {
-    const gastoDocRef = doc(db, "gastos", gastoId);
-    try {
-      await updateDoc(gastoDocRef, {
-        pago: !pagoAtual,
-      });
-    } catch (error) {
-      console.error("Erro ao atualizar status de pagamento: ", error);
-    }
+    await updateDoc(doc(db, "gastos", gastoId), { pago: !pagoAtual });
   };
 
-  if (loading) return <Spinner />;
+  if (loading) {
+    return (
+      <VStack spacing={4} align="stretch">
+        {[...Array(4)].map((_, i) => (
+          <Box key={i} p={4} borderWidth="1px" borderRadius="lg">
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
+          </Box>
+        ))}
+      </VStack>
+    );
+  }
 
   return (
     <Box>
-      {/* O Título agora é gerido pelo Dashboard */}
-      {gastos.length === 0 ? (
+      {gastosFiltrados.length === 0 ? (
         <Text textAlign="center" mt={4}>
-          Nenhum gasto registado para este mês.
+          {gastos.length > 0
+            ? "Nenhum resultado encontrado para os filtros aplicados."
+            : "Nenhum gasto registado para este mês."}
         </Text>
       ) : (
         <VStack spacing={4} align="stretch">
-          {gastos.map((gasto) => (
+          {gastosFiltrados.map((gasto) => (
             <Flex
               key={gasto.id}
               p={4}
@@ -200,7 +205,6 @@ function ExpenseList({ usuario, currentDate }) {
                   {formatDate(gasto.data)}
                 </Text>
               </Box>
-
               <HStack
                 w={{ base: "full", md: "auto" }}
                 justifyContent="space-between"
@@ -253,7 +257,6 @@ function ExpenseList({ usuario, currentDate }) {
           ))}
         </VStack>
       )}
-
       {gastoParaEditar && (
         <EditExpenseModal
           isOpen={isEditOpen}
@@ -289,5 +292,4 @@ function ExpenseList({ usuario, currentDate }) {
     </Box>
   );
 }
-
 export default ExpenseList;

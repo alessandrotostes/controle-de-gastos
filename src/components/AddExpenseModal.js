@@ -1,4 +1,3 @@
-// src/components/AddExpenseModal.js
 import React from "react";
 import {
   Modal,
@@ -10,16 +9,19 @@ import {
 } from "@chakra-ui/react";
 import ExpenseForm from "./ExpenseForm";
 
-function AddExpenseModal({ isOpen, onClose, usuario }) {
+function AddExpenseModal({ isOpen, onClose, usuario, selectedDate }) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent mx={4}>
         <ModalHeader>Adicionar Novo Gasto</ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={6}>
-          {/* O formulário agora vive dentro do modal e passamos a função onClose para ele */}
-          <ExpenseForm usuario={usuario} onSuccess={onClose} />
+          <ExpenseForm
+            usuario={usuario}
+            onSuccess={onClose}
+            selectedDate={selectedDate}
+          />
         </ModalBody>
       </ModalContent>
     </Modal>
