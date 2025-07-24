@@ -16,6 +16,8 @@ import {
   Text,
   VStack,
   HStack,
+  Spinner,
+  Heading,
   IconButton,
   useDisclosure,
   Button,
@@ -35,11 +37,11 @@ import {
   FormControl,
   FormLabel,
   Input,
-  NumberInput,
-  NumberInputField,
   useToast,
   Flex,
   SkeletonText,
+  InputGroup,
+  InputLeftAddon,
 } from "@chakra-ui/react";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 
@@ -75,7 +77,6 @@ function IncomeList({ usuario, currentDate }) {
   useEffect(() => {
     if (!usuario || !currentDate) return;
     setLoading(true);
-
     const startOfMonth = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
@@ -91,7 +92,6 @@ function IncomeList({ usuario, currentDate }) {
     );
     const startTimestamp = Timestamp.fromDate(startOfMonth);
     const endTimestamp = Timestamp.fromDate(endOfMonth);
-
     const q = query(
       collection(db, "ganhos"),
       where("userId", "==", usuario.uid),
@@ -99,7 +99,6 @@ function IncomeList({ usuario, currentDate }) {
       where("data", "<=", endTimestamp),
       orderBy("data", "desc")
     );
-
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -124,12 +123,10 @@ function IncomeList({ usuario, currentDate }) {
     setValorEdit(item.valor);
     onEditOpen();
   };
-
   const handleDeleteClick = (item) => {
     setItemSelecionado(item);
     onDeleteOpen();
   };
-
   const handleUpdate = async () => {
     if (!itemSelecionado) return;
     const itemDocRef = doc(db, "ganhos", itemSelecionado.id);
@@ -145,7 +142,6 @@ function IncomeList({ usuario, currentDate }) {
       isClosable: true,
     });
   };
-
   const handleDelete = async () => {
     if (!itemSelecionado) return;
     await deleteDoc(doc(db, "ganhos", itemSelecionado.id));
@@ -161,11 +157,15 @@ function IncomeList({ usuario, currentDate }) {
   if (loading) {
     return (
       <VStack spacing={4} align="stretch">
-        {[...Array(3)].map((_, i) => (
-          <Box key={i} p={4} borderWidth="1px" borderRadius="lg">
-            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
-          </Box>
-        ))}
+        <Box p={4} borderWidth="1px" borderRadius="lg">
+          <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
+        </Box>
+        <Box p={4} borderWidth="1px" borderRadius="lg">
+          <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
+        </Box>
+        <Box p={4} borderWidth="1px" borderRadius="lg">
+          <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
+        </Box>
       </VStack>
     );
   }
@@ -223,10 +223,9 @@ function IncomeList({ usuario, currentDate }) {
           ))}
         </VStack>
       )}
-
-      <Modal isOpen={isEditOpen} onClose={onEditClose}>
+      <Modal isOpen={isEditOpen} onClose={onEditClose} isCentered>
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent mx={4}>
           <ModalHeader>Editar Ganho</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
@@ -238,10 +237,18 @@ function IncomeList({ usuario, currentDate }) {
               />
             </FormControl>
             <FormControl mt={4}>
-              <FormLabel>Valor (R$)</FormLabel>
-              <NumberInput value={valorEdit} onChange={(v) => setValorEdit(v)}>
-                <NumberInputField />
-              </NumberInput>
+              <FormLabel>Valor</FormLabel>
+              <InputGroup>
+                <InputLeftAddon>R$</InputLeftAddon>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={valorEdit}
+                  onChange={(e) =>
+                    setValorEdit(e.target.value.replace(",", "."))
+                  }
+                />
+              </InputGroup>
             </FormControl>
           </ModalBody>
           <ModalFooter>
@@ -254,7 +261,6 @@ function IncomeList({ usuario, currentDate }) {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
       <AlertDialog
         isOpen={isDeleteOpen}
         leastDestructiveRef={cancelRef}
@@ -280,5 +286,4 @@ function IncomeList({ usuario, currentDate }) {
     </Box>
   );
 }
-
 export default IncomeList;

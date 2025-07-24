@@ -1,4 +1,3 @@
-// src/components/EditExpenseModal.js
 import React, { useState, useEffect } from "react";
 import {
   doc,
@@ -22,14 +21,14 @@ import {
   FormControl,
   FormLabel,
   Input,
-  NumberInput,
-  NumberInputField,
   Select,
   VStack,
   useToast,
   HStack,
   Switch,
   Checkbox,
+  InputGroup,
+  InputLeftAddon,
 } from "@chakra-ui/react";
 
 function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
@@ -65,7 +64,7 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
       setValor(gasto.valor);
       setCategoria(gasto.categoria);
       setDividido(gasto.dividido || false);
-      setPago(gasto.pago === undefined ? true : gasto.pago); // Define 'pago', default para true se não existir
+      setPago(gasto.pago === undefined ? true : gasto.pago);
     }
   }, [gasto]);
 
@@ -77,8 +76,8 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
         descricao,
         valor: Number(valor),
         categoria,
-        dividido: dividido,
-        pago: pago,
+        dividido,
+        pago,
       });
       toast({
         title: "Gasto atualizado!",
@@ -100,9 +99,9 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent mx={4}>
         <ModalHeader>Editar Gasto</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
@@ -115,10 +114,16 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
               />
             </FormControl>
             <FormControl isRequired>
-              <FormLabel>Valor (R$)</FormLabel>
-              <NumberInput value={valor} onChange={(v) => setValor(v)}>
-                <NumberInputField />
-              </NumberInput>
+              <FormLabel>Valor</FormLabel>
+              <InputGroup>
+                <InputLeftAddon>R$</InputLeftAddon>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={valor}
+                  onChange={(e) => setValor(e.target.value.replace(",", "."))}
+                />
+              </InputGroup>
             </FormControl>
             <FormControl isRequired>
               <FormLabel>Categoria</FormLabel>

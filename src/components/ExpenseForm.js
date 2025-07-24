@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   collection,
   addDoc,
+  serverTimestamp,
   query,
   where,
   onSnapshot,
@@ -13,13 +14,13 @@ import {
   FormControl,
   FormLabel,
   Input,
-  NumberInput,
-  NumberInputField,
   Select,
   VStack,
   HStack,
   Switch,
   Checkbox,
+  InputGroup,
+  InputLeftAddon,
 } from "@chakra-ui/react";
 
 function ExpenseForm({ usuario, onSuccess, selectedDate }) {
@@ -54,18 +55,16 @@ function ExpenseForm({ usuario, onSuccess, selectedDate }) {
       alert("Por favor, preencha todos os campos, incluindo a categoria.");
       return;
     }
-
     try {
       await addDoc(collection(db, "gastos"), {
         descricao,
         valor: Number(valor),
         categoria,
-        dividido: dividido,
-        pago: pago,
-        data: selectedDate, // Usa a data selecionada
+        dividido,
+        pago,
+        data: selectedDate,
         userId: usuario.uid,
       });
-
       setDescricao("");
       setValor("");
       setCategoria("");
@@ -90,10 +89,17 @@ function ExpenseForm({ usuario, onSuccess, selectedDate }) {
         />
       </FormControl>
       <FormControl isRequired>
-        <FormLabel>Valor (R$)</FormLabel>
-        <NumberInput value={valor} onChange={(v) => setValor(v)}>
-          <NumberInputField placeholder="Ex: 50.00" />
-        </NumberInput>
+        <FormLabel>Valor</FormLabel>
+        <InputGroup>
+          <InputLeftAddon>R$</InputLeftAddon>
+          <Input
+            type="text"
+            inputMode="decimal"
+            value={valor}
+            onChange={(e) => setValor(e.target.value.replace(",", "."))}
+            placeholder="50,00"
+          />
+        </InputGroup>
       </FormControl>
       <FormControl isRequired>
         <FormLabel>Categoria</FormLabel>

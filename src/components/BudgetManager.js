@@ -15,8 +15,6 @@ import {
   FormControl,
   FormLabel,
   Input,
-  NumberInput,
-  NumberInputField,
   VStack,
   Heading,
   useToast,
@@ -36,7 +34,6 @@ function BudgetManager({ usuario }) {
   const [userCategories, setUserCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
-
   const budgetDocId = `${usuario.uid}_${selectedDate.getFullYear()}-${String(
     selectedDate.getMonth() + 1
   ).padStart(2, "0")}`;
@@ -73,6 +70,12 @@ function BudgetManager({ usuario }) {
   }, [fetchBudget]);
 
   const handleSaveBudget = async () => {
+    const cleanCategoryBudgets = Object.fromEntries(
+      Object.entries(categoryBudgets).map(([key, value]) => [
+        key,
+        Number(value) || 0,
+      ])
+    );
     const budgetDocRef = doc(db, "orcamentos", budgetDocId);
     const budgetData = {
       userId: usuario.uid,
@@ -80,7 +83,7 @@ function BudgetManager({ usuario }) {
         selectedDate.getMonth() + 1
       ).padStart(2, "0")}`,
       valorTotal: Number(totalBudget) || 0,
-      orcamentosPorCategoria: categoryBudgets,
+      orcamentosPorCategoria: cleanCategoryBudgets,
     };
     await setDoc(budgetDocRef, budgetData, { merge: true });
     toast({
@@ -94,7 +97,7 @@ function BudgetManager({ usuario }) {
   const handleCategoryBudgetChange = (categoryName, value) => {
     setCategoryBudgets((prev) => ({
       ...prev,
-      [categoryName]: Number(value) || 0,
+      [categoryName]: value.replace(",", "."),
     }));
   };
 
@@ -116,13 +119,17 @@ function BudgetManager({ usuario }) {
       </FormControl>
       <VStack spacing={6} align="stretch">
         <FormControl>
-          <FormLabel>Orçamento Total do Mês (R$)</FormLabel>
-          <NumberInput
-            value={totalBudget}
-            onChange={(val) => setTotalBudget(val)}
-          >
-            <NumberInputField placeholder="Ex: 3000.00" />
-          </NumberInput>
+          <FormLabel>Orçamento Total do Mês</FormLabel>
+          <InputGroup>
+            <InputLeftAddon>R$</InputLeftAddon>
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={totalBudget}
+              onChange={(e) => setTotalBudget(e.target.value.replace(",", "."))}
+              placeholder="3000,00"
+            />
+          </InputGroup>
         </FormControl>
         <Box>
           <Text fontWeight="bold" mb={2}>
@@ -134,18 +141,16 @@ function BudgetManager({ usuario }) {
                 <FormLabel>{cat.nome}</FormLabel>
                 <InputGroup>
                   <InputLeftAddon>R$</InputLeftAddon>
-                  <NumberInput
-                    w="100%"
+                  <Input
+                    type="text"
+                    inputMode="decimal"
                     value={categoryBudgets[cat.nome] || ""}
-                    onChange={(val) =>
-                      handleCategoryBudgetChange(cat.nome, val)
+                    onChange={(e) =>
+                      handleCategoryBudgetChange(cat.nome, e.target.value)
                     }
-                  >
-                    <NumberInputField
-                      borderTopLeftRadius={0}
-                      borderBottomLeftRadius={0}
-                    />
-                  </NumberInput>
+                    borderTopLeftRadius={0}
+                    borderBottomLeftRadius={0}
+                  />
                 </InputGroup>
               </FormControl>
             ))}

@@ -16,7 +16,6 @@ import {
   Stat,
   StatLabel,
   StatNumber,
-  Spinner,
   Flex,
   IconButton,
   Text,
@@ -27,6 +26,8 @@ import {
   Button,
   Progress,
   useColorModeValue,
+  StatHelpText,
+  StatArrow,
   Skeleton,
   SkeletonText,
   SkeletonCircle,
@@ -67,7 +68,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
   useEffect(() => {
     if (!usuario) return;
     setLoading(true);
-
     const startOfMonth = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
@@ -83,7 +83,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
     );
     const startTimestamp = Timestamp.fromDate(startOfMonth);
     const endTimestamp = Timestamp.fromDate(endOfMonth);
-
     const fetchBudgetData = async () => {
       const budgetDocId = `${usuario.uid}_${currentDate.getFullYear()}-${String(
         currentDate.getMonth() + 1
@@ -95,7 +94,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
       }
       return { valorTotal: 0, orcamentosPorCategoria: {} };
     };
-
     const ganhosQuery = query(
       collection(db, "ganhos"),
       where("userId", "==", usuario.uid),
@@ -109,7 +107,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
       );
       setSummaryData((prevData) => ({ ...prevData, totalGanhos }));
     });
-
     const gastosQuery = query(
       collection(db, "gastos"),
       where("userId", "==", usuario.uid),
@@ -118,12 +115,10 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
     );
     const unsubscribeGastos = onSnapshot(gastosQuery, async (gastosSnap) => {
       const budgetData = await fetchBudgetData();
-
       let totalGastos = 0,
         totalPago = 0;
       const gastosPorCategoria = {},
         gastosPendentes = [];
-
       gastosSnap.forEach((doc) => {
         const gasto = doc.data();
         totalGastos += gasto.valor;
@@ -132,11 +127,9 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
         } else {
           gastosPendentes.push({ ...gasto, id: doc.id });
         }
-
         gastosPorCategoria[gasto.categoria] =
           (gastosPorCategoria[gasto.categoria] || 0) + gasto.valor;
       });
-
       setSummaryData((prevData) => ({
         ...prevData,
         totalGastos,
@@ -151,7 +144,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
       }));
       setLoading(false);
     });
-
     return () => {
       unsubscribeGanhos();
       unsubscribeGastos();
@@ -168,7 +160,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
       new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
     );
   };
-
   const categoryLabels = Object.keys(summaryData.gastosPorCategoria);
   const backgroundColorsKeys = categoryLabels.map(
     (cat) => `${categoryColorMap[cat] || "gray"}.300`
@@ -178,7 +169,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
   );
   const resolvedBackgroundColors = useToken("colors", backgroundColorsKeys);
   const resolvedBorderColors = useToken("colors", borderColorsKeys);
-
   const chartData = {
     labels: categoryLabels,
     datasets: [
@@ -236,6 +226,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
   const hasCategoryBudgets = Object.values(
     summaryData.orcamentosPorCategoria
   ).some((budget) => budget > 0);
+  const saldoFinal = summaryData.totalGanhos - summaryData.totalGastos;
 
   return (
     <Box>
@@ -275,8 +266,29 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
         />
       </Flex>
 
+      <Stat
+        p={6}
+        borderWidth="1px"
+        borderRadius="lg"
+        textAlign="center"
+        mb={8}
+        boxShadow="md"
+      >
+        <StatLabel fontSize="xl">Saldo Final Previsto</StatLabel>
+        <StatNumber
+          fontSize={{ base: "3xl", md: "4xl" }}
+          color={saldoFinal >= 0 ? "green.500" : "red.500"}
+        >
+          R$ {saldoFinal.toFixed(2)}
+        </StatNumber>
+        <StatHelpText>
+          <StatArrow type={saldoFinal >= 0 ? "increase" : "decrease"} />
+          Após todos os gastos do mês
+        </StatHelpText>
+      </Stat>
+
       <SimpleGrid
-        columns={{ base: 2, md: 4 }}
+        columns={{ base: 1, sm: 3 }}
         spacing={{ base: 3, md: 6 }}
         mb={8}
       >
@@ -294,12 +306,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
               de R$ {summaryData.orcamentoTotal.toFixed(2)}
             </Text>
           )}
-        </Stat>
-        <Stat p={4} borderWidth="1px" borderRadius="lg">
-          <StatLabel>Total Pago</StatLabel>
-          <StatNumber color="blue.500">
-            R$ {summaryData.totalPago.toFixed(2)}
-          </StatNumber>
         </Stat>
         <Stat p={4} borderWidth="1px" borderRadius="lg">
           <StatLabel>Pendente</StatLabel>
@@ -419,5 +425,4 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
     </Box>
   );
 }
-
 export default SummaryDashboard;

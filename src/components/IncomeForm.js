@@ -6,9 +6,9 @@ import {
   FormControl,
   FormLabel,
   Input,
-  NumberInput,
-  NumberInputField,
   VStack,
+  InputGroup,
+  InputLeftAddon,
 } from "@chakra-ui/react";
 
 function IncomeForm({ usuario, onSuccess, selectedDate }) {
@@ -18,12 +18,11 @@ function IncomeForm({ usuario, onSuccess, selectedDate }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (descricao === "" || valor === "") return;
-
     try {
       await addDoc(collection(db, "ganhos"), {
         descricao,
         valor: Number(valor),
-        data: selectedDate, // Usa a data selecionada
+        data: selectedDate,
         userId: usuario.uid,
       });
       setDescricao("");
@@ -47,10 +46,17 @@ function IncomeForm({ usuario, onSuccess, selectedDate }) {
         />
       </FormControl>
       <FormControl isRequired>
-        <FormLabel>Valor (R$)</FormLabel>
-        <NumberInput value={valor} onChange={(v) => setValor(v)}>
-          <NumberInputField placeholder="Ex: 500.00" />
-        </NumberInput>
+        <FormLabel>Valor</FormLabel>
+        <InputGroup>
+          <InputLeftAddon>R$</InputLeftAddon>
+          <Input
+            type="text"
+            inputMode="decimal"
+            value={valor}
+            onChange={(e) => setValor(e.target.value.replace(",", "."))}
+            placeholder="5000,00"
+          />
+        </InputGroup>
       </FormControl>
       <Button type="submit" colorScheme="green" width="full" mt={4}>
         Adicionar Ganho
