@@ -8,12 +8,12 @@ import {
   onSnapshot,
   orderBy,
 } from "firebase/firestore";
+import { Link as RouterLink } from "react-router-dom";
 import ExpenseList from "../components/ExpenseList";
 import IncomeList from "../components/IncomeList";
 import SummaryDashboard from "../components/SummaryDashboard";
 import AddExpenseModal from "../components/AddExpenseModal";
 import AddIncomeModal from "../components/AddIncomeModal";
-import { Link as RouterLink } from "react-router-dom";
 import {
   Box,
   Button,
@@ -48,7 +48,6 @@ import {
 } from "@chakra-ui/icons";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { ptBR } from "date-fns/locale/pt-BR";
-
 registerLocale("pt-BR", ptBR);
 
 function Dashboard({ usuario }) {
@@ -96,7 +95,6 @@ function Dashboard({ usuario }) {
       onIncomeOpen();
     }
   };
-
   const handleLogout = async () => {
     await signOut(auth);
   };
@@ -126,7 +124,7 @@ function Dashboard({ usuario }) {
       <Box bg={colorMode === "light" ? "gray.100" : "gray.700"} p={4}>
         <Flex as="header" align="center">
           <Heading as="h1" size={{ base: "md", md: "lg" }}>
-            Controle Financeiro
+            Painel Financeiro
           </Heading>
           <Spacer />
           <IconButton
@@ -152,6 +150,7 @@ function Dashboard({ usuario }) {
           </Button>
         </Flex>
       </Box>
+
       <Container maxW="container.lg" mt={8}>
         <Tabs
           isFitted
@@ -177,7 +176,9 @@ function Dashboard({ usuario }) {
                   onClick={goToPreviousGastosMonth}
                   aria-label="Mês anterior"
                 />
-                <Box mx={2}>
+                <Box mx={4}>
+                  {" "}
+                  {/* AUMENTADO O ESPAÇAMENTO */}
                   <DatePicker
                     selected={gastosDate}
                     onChange={(date) => setGastosDate(date)}
@@ -185,13 +186,7 @@ function Dashboard({ usuario }) {
                     showMonthYearPicker
                     locale="pt-BR"
                     customInput={
-                      <Button
-                        as={Heading}
-                        size="lg"
-                        variant="ghost"
-                        w="250px"
-                        textAlign="center"
-                      >
+                      <Button as={Heading} size="lg" variant="ghost">
                         {gastosDate.toLocaleDateString("pt-BR", {
                           month: "long",
                           year: "numeric",
@@ -253,7 +248,9 @@ function Dashboard({ usuario }) {
                   onClick={goToPreviousGanhosMonth}
                   aria-label="Mês anterior"
                 />
-                <Box mx={2}>
+                <Box mx={4}>
+                  {" "}
+                  {/* AUMENTADO O ESPAÇAMENTO */}
                   <DatePicker
                     selected={ganhosDate}
                     onChange={(date) => setGanhosDate(date)}
@@ -261,13 +258,7 @@ function Dashboard({ usuario }) {
                     showMonthYearPicker
                     locale="pt-BR"
                     customInput={
-                      <Button
-                        as={Heading}
-                        size="lg"
-                        variant="ghost"
-                        w="250px"
-                        textAlign="center"
-                      >
+                      <Button as={Heading} size="lg" variant="ghost">
                         {ganhosDate.toLocaleDateString("pt-BR", {
                           month: "long",
                           year: "numeric",
@@ -303,7 +294,6 @@ function Dashboard({ usuario }) {
           onClick={handleFabClick}
         />
       )}
-
       <AddExpenseModal
         isOpen={isExpenseOpen}
         onClose={onExpenseClose}

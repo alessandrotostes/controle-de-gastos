@@ -236,7 +236,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
           onClick={goToPreviousMonth}
           aria-label="Mês anterior"
         />
-        <Box mx={2}>
+        <Box mx={8}>
           <DatePicker
             selected={currentDate}
             onChange={(date) => setCurrentDate(date)}
