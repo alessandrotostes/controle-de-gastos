@@ -32,16 +32,15 @@ import {
   RadioGroup,
   Radio,
 } from "@chakra-ui/react";
-import DatePicker, { registerLocale } from "react-datepicker";
-import { ptBR } from "date-fns/locale/pt-BR";
-registerLocale("pt-BR", ptBR);
+import DatePicker from "react-datepicker";
 
 function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("");
   const [categoria, setCategoria] = useState("");
   const [dividido, setDividido] = useState(false);
-  const [pago, setPago] = useState(true);
+  // 1. ALTERAÇÃO: O estado 'pago' agora começa como 'false'.
+  const [pago, setPago] = useState(false);
   const [metodoPagamento, setMetodoPagamento] = useState("À Vista");
   const [data, setData] = useState(new Date());
   const [userCategories, setUserCategories] = useState([]);
@@ -71,7 +70,8 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
       setValor(gasto.valor);
       setCategoria(gasto.categoria);
       setDividido(gasto.dividido || false);
-      setPago(gasto.pago === undefined ? true : gasto.pago);
+      // 2. ALTERAÇÃO: O padrão para gastos antigos agora é 'false'.
+      setPago(gasto.pago === undefined ? false : gasto.pago);
       setMetodoPagamento(gasto.metodoPagamento || "À Vista");
       if (gasto.data && gasto.data.seconds) {
         setData(new Date(gasto.data.seconds * 1000));
@@ -90,7 +90,7 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
         dividido,
         pago,
         metodoPagamento,
-        data: data,
+        data,
       });
       toast({
         title: "Gasto atualizado!",

@@ -32,7 +32,8 @@ function ExpenseForm({ usuario, onSuccess }) {
   const [categoria, setCategoria] = useState("");
   const [userCategories, setUserCategories] = useState([]);
   const [dividido, setDividido] = useState(false);
-  const [pago, setPago] = useState(true);
+  // 1. ALTERAÇÃO PRINCIPAL: O estado 'pago' agora começa como 'false'.
+  const [pago, setPago] = useState(false);
   const [metodoPagamento, setMetodoPagamento] = useState("À Vista");
   const toast = useToast();
 
@@ -68,7 +69,7 @@ function ExpenseForm({ usuario, onSuccess }) {
         dividido,
         pago,
         metodoPagamento: metodoPagamento,
-        data: serverTimestamp(), // Alterado de volta para serverTimestamp
+        data: serverTimestamp(),
         userId: usuario.uid,
       });
       toast({
@@ -82,7 +83,8 @@ function ExpenseForm({ usuario, onSuccess }) {
       setValor("");
       setCategoria("");
       setDividido(false);
-      setPago(true);
+      // 2. ALTERAÇÃO NA LIMPEZA: O estado 'pago' volta a ser 'false'.
+      setPago(false);
       setMetodoPagamento("À Vista");
       if (onSuccess) {
         onSuccess();
@@ -129,6 +131,7 @@ function ExpenseForm({ usuario, onSuccess }) {
           ))}
         </Select>
       </FormControl>
+
       <FormControl>
         <FormLabel>Método de Pagamento</FormLabel>
         <RadioGroup onChange={setMetodoPagamento} value={metodoPagamento}>
@@ -138,6 +141,7 @@ function ExpenseForm({ usuario, onSuccess }) {
           </HStack>
         </RadioGroup>
       </FormControl>
+
       <HStack w="full" justify="space-between" pt={2}>
         <FormControl as={HStack}>
           <FormLabel htmlFor="dividir-gasto" mb="0">
