@@ -9,7 +9,7 @@ import {
 } from "@chakra-ui/react";
 import ExpenseForm from "./ExpenseForm";
 
-function AddExpenseModal({ isOpen, onClose, usuario, selectedDate }) {
+function AddExpenseModal({ isOpen, onClose, usuario }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay />
@@ -17,11 +17,7 @@ function AddExpenseModal({ isOpen, onClose, usuario, selectedDate }) {
         <ModalHeader>Adicionar Novo Gasto</ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={6}>
-          <ExpenseForm
-            usuario={usuario}
-            onSuccess={onClose}
-            selectedDate={selectedDate}
-          />
+          <ExpenseForm usuario={usuario} onSuccess={onClose} />
         </ModalBody>
       </ModalContent>
     </Modal>

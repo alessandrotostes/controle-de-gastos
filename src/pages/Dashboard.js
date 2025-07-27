@@ -1,3 +1,4 @@
+// src/pages/Dashboard.js
 import React, { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebase";
@@ -14,6 +15,7 @@ import IncomeList from "../components/IncomeList";
 import SummaryDashboard from "../components/SummaryDashboard";
 import AddExpenseModal from "../components/AddExpenseModal";
 import AddIncomeModal from "../components/AddIncomeModal";
+import UpdateModal, { APP_VERSION } from "../components/UpdateModal";
 import {
   Box,
   Button,
@@ -69,6 +71,22 @@ function Dashboard({ usuario }) {
     onOpen: onIncomeOpen,
     onClose: onIncomeClose,
   } = useDisclosure();
+  // 2. Crie o controlador de estado para o modal de atualização
+  const {
+    isOpen: isUpdateOpen,
+    onOpen: onUpdateOpen,
+    onClose: onUpdateClose,
+  } = useDisclosure();
+
+  // 3. Lógica para verificar a versão e abrir o modal
+  useEffect(() => {
+    // Lê a última versão que o utilizador viu, guardada na memória do navegador
+    const lastVersionSeen = localStorage.getItem("lastVersionSeen");
+    // Se a versão guardada for diferente da versão atual da aplicação...
+    if (lastVersionSeen !== APP_VERSION) {
+      onUpdateOpen(); // ...abre o pop-up de novidades!
+    }
+  }, [onUpdateOpen]); // A dependência garante que esta lógica corre apenas uma vez
 
   useEffect(() => {
     if (usuario) {
@@ -177,8 +195,6 @@ function Dashboard({ usuario }) {
                   aria-label="Mês anterior"
                 />
                 <Box mx={4}>
-                  {" "}
-                  {/* AUMENTADO O ESPAÇAMENTO */}
                   <DatePicker
                     selected={gastosDate}
                     onChange={(date) => setGastosDate(date)}
@@ -249,8 +265,6 @@ function Dashboard({ usuario }) {
                   aria-label="Mês anterior"
                 />
                 <Box mx={4}>
-                  {" "}
-                  {/* AUMENTADO O ESPAÇAMENTO */}
                   <DatePicker
                     selected={ganhosDate}
                     onChange={(date) => setGanhosDate(date)}
@@ -294,18 +308,20 @@ function Dashboard({ usuario }) {
           onClick={handleFabClick}
         />
       )}
+
       <AddExpenseModal
         isOpen={isExpenseOpen}
         onClose={onExpenseClose}
         usuario={usuario}
-        selectedDate={gastosDate}
       />
       <AddIncomeModal
         isOpen={isIncomeOpen}
         onClose={onIncomeClose}
         usuario={usuario}
-        selectedDate={ganhosDate}
       />
+
+      {/* 4. Renderize o novo modal de atualização */}
+      <UpdateModal isOpen={isUpdateOpen} onClose={onUpdateClose} />
     </Box>
   );
 }

@@ -29,7 +29,12 @@ import {
   Checkbox,
   InputGroup,
   InputLeftAddon,
+  RadioGroup,
+  Radio,
 } from "@chakra-ui/react";
+import DatePicker, { registerLocale } from "react-datepicker";
+import { ptBR } from "date-fns/locale/pt-BR";
+registerLocale("pt-BR", ptBR);
 
 function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
   const [descricao, setDescricao] = useState("");
@@ -37,6 +42,8 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
   const [categoria, setCategoria] = useState("");
   const [dividido, setDividido] = useState(false);
   const [pago, setPago] = useState(true);
+  const [metodoPagamento, setMetodoPagamento] = useState("À Vista");
+  const [data, setData] = useState(new Date());
   const [userCategories, setUserCategories] = useState([]);
   const toast = useToast();
 
@@ -65,6 +72,10 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
       setCategoria(gasto.categoria);
       setDividido(gasto.dividido || false);
       setPago(gasto.pago === undefined ? true : gasto.pago);
+      setMetodoPagamento(gasto.metodoPagamento || "À Vista");
+      if (gasto.data && gasto.data.seconds) {
+        setData(new Date(gasto.data.seconds * 1000));
+      }
     }
   }, [gasto]);
 
@@ -78,6 +89,8 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
         categoria,
         dividido,
         pago,
+        metodoPagamento,
+        data: data,
       });
       toast({
         title: "Gasto atualizado!",
@@ -106,6 +119,16 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
         <ModalCloseButton />
         <ModalBody>
           <VStack spacing={4}>
+            <FormControl isRequired>
+              <FormLabel>Data do Gasto</FormLabel>
+              <DatePicker
+                selected={data}
+                onChange={(date) => setData(date)}
+                dateFormat="dd/MM/yyyy"
+                locale="pt-BR"
+                customInput={<Input />}
+              />
+            </FormControl>
             <FormControl isRequired>
               <FormLabel>Descrição</FormLabel>
               <Input
@@ -138,24 +161,37 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
                 ))}
               </Select>
             </FormControl>
-            <FormControl as={HStack} justify="space-between">
-              <FormLabel htmlFor="dividir-gasto-edit" mb="0">
-                Dividir gasto por 2?
-              </FormLabel>
-              <Switch
-                id="dividir-gasto-edit"
-                isChecked={dividido}
-                onChange={(e) => setDividido(e.target.checked)}
-              />
-            </FormControl>
             <FormControl>
-              <Checkbox
-                isChecked={pago}
-                onChange={(e) => setPago(e.target.checked)}
-              >
-                Gasto já foi pago?
-              </Checkbox>
+              <FormLabel>Método de Pagamento</FormLabel>
+              <RadioGroup onChange={setMetodoPagamento} value={metodoPagamento}>
+                <HStack spacing={4}>
+                  <Radio value="À Vista">À Vista</Radio>
+                  <Radio value="Cartão de Crédito">Cartão de Crédito</Radio>
+                </HStack>
+              </RadioGroup>
             </FormControl>
+            <HStack w="full" justify="space-between" pt={2}>
+              <FormControl as={HStack}>
+                <FormLabel htmlFor="dividir-gasto-edit" mb="0">
+                  Dividir por 2?
+                </FormLabel>
+                <Switch
+                  id="dividir-gasto-edit"
+                  isChecked={dividido}
+                  onChange={(e) => setDividido(e.target.checked)}
+                />
+              </FormControl>
+              <FormControl as={HStack} justifyContent="flex-end">
+                <FormLabel htmlFor="pago-checkbox-edit" mb="0">
+                  Pago?
+                </FormLabel>
+                <Checkbox
+                  id="pago-checkbox-edit"
+                  isChecked={pago}
+                  onChange={(e) => setPago(e.target.checked)}
+                />
+              </FormControl>
+            </HStack>
           </VStack>
         </ModalBody>
         <ModalFooter>
@@ -170,5 +206,4 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
     </Modal>
   );
 }
-
 export default EditExpenseModal;

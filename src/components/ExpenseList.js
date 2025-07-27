@@ -17,6 +17,8 @@ import {
   VStack,
   HStack,
   Tag,
+  Spinner,
+  Heading,
   IconButton,
   useDisclosure,
   AlertDialog,
@@ -28,8 +30,10 @@ import {
   Button,
   Flex,
   SkeletonText,
+  Tooltip,
 } from "@chakra-ui/react";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
+import { FaCreditCard, FaMoneyBillWave } from "react-icons/fa";
 import EditExpenseModal from "./EditExpenseModal";
 
 const formatDate = (timestamp) => {
@@ -177,7 +181,7 @@ function ExpenseList({ usuario, currentDate, filtroCategoria, filtroTexto }) {
       {gastosFiltrados.length === 0 ? (
         <Text textAlign="center" mt={4}>
           {gastos.length > 0
-            ? "Nenhum resultado encontrado para os filtros aplicados."
+            ? "Nenhum resultado encontrado."
             : "Nenhum gasto registado para este mês."}
         </Text>
       ) : (
@@ -208,32 +212,58 @@ function ExpenseList({ usuario, currentDate, filtroCategoria, filtroTexto }) {
               <HStack
                 w={{ base: "full", md: "auto" }}
                 justifyContent="space-between"
+                alignItems="center"
               >
-                <VStack align="flex-start" spacing={1}>
-                  <Text fontWeight="bold">R$ {gasto.valor.toFixed(2)}</Text>
-                  {gasto.dividido && (
-                    <Text fontSize="xs" color="gray.600">
-                      (R$ {(gasto.valor / 2).toFixed(2)} p/ pessoa)
-                    </Text>
-                  )}
-                  <HStack>
-                    <Tag
-                      colorScheme={categoryColorMap[gasto.categoria] || "gray"}
-                      size="sm"
+                <HStack flex="1" spacing={4}>
+                  <VStack align="flex-start" spacing={1}>
+                    <Text fontWeight="bold">R$ {gasto.valor.toFixed(2)}</Text>
+                    {gasto.dividido && (
+                      <Text fontSize="xs" color="gray.600">
+                        (R$ {(gasto.valor / 2).toFixed(2)} p/ pessoa)
+                      </Text>
+                    )}
+                    <HStack>
+                      <Tag
+                        colorScheme={
+                          categoryColorMap[gasto.categoria] || "gray"
+                        }
+                        size="sm"
+                      >
+                        {gasto.categoria}
+                      </Tag>
+                      <Tag
+                        size="sm"
+                        variant="solid"
+                        colorScheme={gasto.pago ? "green" : "yellow"}
+                        onClick={() => handleTogglePago(gasto.id, gasto.pago)}
+                        cursor="pointer"
+                      >
+                        {gasto.pago ? "Pago" : "Pendente"}
+                      </Tag>
+                    </HStack>
+                  </VStack>
+                  <Tooltip
+                    label={gasto.metodoPagamento || "À Vista"}
+                    placement="top"
+                  >
+                    {/* AQUI ESTÁ A MUDANÇA: A cor agora é dinâmica */}
+                    <Box
+                      as="span"
+                      fontSize="xl"
+                      color={
+                        gasto.metodoPagamento === "Cartão de Crédito"
+                          ? "purple.400"
+                          : "green.400"
+                      }
                     >
-                      {gasto.categoria}
-                    </Tag>
-                    <Tag
-                      size="sm"
-                      variant="solid"
-                      colorScheme={gasto.pago ? "green" : "yellow"}
-                      onClick={() => handleTogglePago(gasto.id, gasto.pago)}
-                      cursor="pointer"
-                    >
-                      {gasto.pago ? "Pago" : "Pendente"}
-                    </Tag>
-                  </HStack>
-                </VStack>
+                      {gasto.metodoPagamento === "Cartão de Crédito" ? (
+                        <FaCreditCard />
+                      ) : (
+                        <FaMoneyBillWave />
+                      )}
+                    </Box>
+                  </Tooltip>
+                </HStack>
                 <VStack>
                   <IconButton
                     icon={<EditIcon />}

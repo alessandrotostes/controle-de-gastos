@@ -1,3 +1,4 @@
+// src/components/BudgetManager.js
 import React, { useState, useEffect, useCallback } from "react";
 import { db } from "../firebase";
 import {
@@ -70,6 +71,16 @@ function BudgetManager({ usuario }) {
   }, [fetchBudget]);
 
   const handleSaveBudget = async () => {
+    let finalTotalBudget = Number(totalBudget) || 0;
+
+    // Lógica para somar as categorias se o total for 0
+    if (finalTotalBudget === 0 && Object.keys(categoryBudgets).length > 0) {
+      finalTotalBudget = Object.values(categoryBudgets).reduce(
+        (sum, value) => sum + Number(value),
+        0
+      );
+    }
+
     const cleanCategoryBudgets = Object.fromEntries(
       Object.entries(categoryBudgets).map(([key, value]) => [
         key,
@@ -82,7 +93,7 @@ function BudgetManager({ usuario }) {
       mesAno: `${selectedDate.getFullYear()}-${String(
         selectedDate.getMonth() + 1
       ).padStart(2, "0")}`,
-      valorTotal: Number(totalBudget) || 0,
+      valorTotal: finalTotalBudget,
       orcamentosPorCategoria: cleanCategoryBudgets,
     };
     await setDoc(budgetDocRef, budgetData, { merge: true });
@@ -92,6 +103,7 @@ function BudgetManager({ usuario }) {
       duration: 3000,
       isClosable: true,
     });
+    fetchBudget(); // Recarrega os dados para mostrar o total calculado
   };
 
   const handleCategoryBudgetChange = (categoryName, value) => {
@@ -119,7 +131,9 @@ function BudgetManager({ usuario }) {
       </FormControl>
       <VStack spacing={6} align="stretch">
         <FormControl>
-          <FormLabel>Orçamento Total do Mês</FormLabel>
+          <FormLabel>
+            Orçamento Total do Mês (Opcional se preencher por categoria)
+          </FormLabel>
           <InputGroup>
             <InputLeftAddon>R$</InputLeftAddon>
             <Input
@@ -133,7 +147,7 @@ function BudgetManager({ usuario }) {
         </FormControl>
         <Box>
           <Text fontWeight="bold" mb={2}>
-            Orçamento por Categoria (Opcional)
+            Orçamento por Categoria
           </Text>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             {userCategories.map((cat) => (
@@ -144,6 +158,7 @@ function BudgetManager({ usuario }) {
                   <Input
                     type="text"
                     inputMode="decimal"
+                    w="100%"
                     value={categoryBudgets[cat.nome] || ""}
                     onChange={(e) =>
                       handleCategoryBudgetChange(cat.nome, e.target.value)

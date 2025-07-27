@@ -21,15 +21,20 @@ import {
   Checkbox,
   InputGroup,
   InputLeftAddon,
+  RadioGroup,
+  Radio,
+  useToast,
 } from "@chakra-ui/react";
 
-function ExpenseForm({ usuario, onSuccess, selectedDate }) {
+function ExpenseForm({ usuario, onSuccess }) {
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("");
   const [categoria, setCategoria] = useState("");
   const [userCategories, setUserCategories] = useState([]);
   const [dividido, setDividido] = useState(false);
   const [pago, setPago] = useState(true);
+  const [metodoPagamento, setMetodoPagamento] = useState("À Vista");
+  const toast = useToast();
 
   useEffect(() => {
     if (usuario) {
@@ -62,14 +67,23 @@ function ExpenseForm({ usuario, onSuccess, selectedDate }) {
         categoria,
         dividido,
         pago,
-        data: selectedDate,
+        metodoPagamento: metodoPagamento,
+        data: serverTimestamp(), // Alterado de volta para serverTimestamp
         userId: usuario.uid,
+      });
+      toast({
+        title: "Gasto adicionado!",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
       });
       setDescricao("");
       setValor("");
       setCategoria("");
       setDividido(false);
       setPago(true);
+      setMetodoPagamento("À Vista");
       if (onSuccess) {
         onSuccess();
       }
@@ -115,21 +129,37 @@ function ExpenseForm({ usuario, onSuccess, selectedDate }) {
           ))}
         </Select>
       </FormControl>
-      <FormControl as={HStack} justify="space-between">
-        <FormLabel htmlFor="dividir-gasto" mb="0">
-          Dividir gasto por 2?
-        </FormLabel>
-        <Switch
-          id="dividir-gasto"
-          isChecked={dividido}
-          onChange={(e) => setDividido(e.target.checked)}
-        />
-      </FormControl>
       <FormControl>
-        <Checkbox isChecked={pago} onChange={(e) => setPago(e.target.checked)}>
-          Gasto já foi pago?
-        </Checkbox>
+        <FormLabel>Método de Pagamento</FormLabel>
+        <RadioGroup onChange={setMetodoPagamento} value={metodoPagamento}>
+          <HStack spacing={4}>
+            <Radio value="À Vista">À Vista (Pix, Débito, Dinheiro)</Radio>
+            <Radio value="Cartão de Crédito">Cartão de Crédito</Radio>
+          </HStack>
+        </RadioGroup>
       </FormControl>
+      <HStack w="full" justify="space-between" pt={2}>
+        <FormControl as={HStack}>
+          <FormLabel htmlFor="dividir-gasto" mb="0">
+            Dividir por 2?
+          </FormLabel>
+          <Switch
+            id="dividir-gasto"
+            isChecked={dividido}
+            onChange={(e) => setDividido(e.target.checked)}
+          />
+        </FormControl>
+        <FormControl as={HStack} justifyContent="flex-end">
+          <FormLabel htmlFor="pago-checkbox" mb="0">
+            Pago?
+          </FormLabel>
+          <Checkbox
+            id="pago-checkbox"
+            isChecked={pago}
+            onChange={(e) => setPago(e.target.checked)}
+          />
+        </FormControl>
+      </HStack>
       <Button type="submit" colorScheme="blue" width="full" mt={4}>
         Adicionar Gasto
       </Button>

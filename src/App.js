@@ -8,8 +8,8 @@ import { theme } from "./theme";
 // Nossas páginas
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
-// import Cadastro from "./pages/Cadastro"; // Já não é necessário
 import Configuracoes from "./pages/Configuracoes";
+import NotFound from "./pages/NotFound"; // 1. Importe a nova página
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -38,6 +38,7 @@ function App() {
     <ChakraProvider theme={theme}>
       <BrowserRouter>
         <Routes>
+          {/* Rotas Protegidas */}
           <Route
             path="/"
             element={
@@ -54,9 +55,13 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Rotas Públicas */}
           <Route path="/login" element={<Login />} />
-          {/* A rota de cadastro agora redireciona para o login */}
           <Route path="/cadastro" element={<Navigate to="/login" />} />
+
+          {/* 2. Rota "Apanha-Tudo" - Deve ser a ÚLTIMA rota da lista */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </ChakraProvider>

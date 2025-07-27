@@ -16,6 +16,7 @@ import {
   Stat,
   StatLabel,
   StatNumber,
+  Spinner,
   Flex,
   IconButton,
   Text,
@@ -60,6 +61,9 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
     gastosPendentes: [],
     orcamentoTotal: 0,
     orcamentosPorCategoria: {},
+    totalDividido: 0,
+    totalCartao: 0,
+    totalAVista: 0,
   });
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -68,6 +72,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
   useEffect(() => {
     if (!usuario) return;
     setLoading(true);
+
     const startOfMonth = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
@@ -83,6 +88,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
     );
     const startTimestamp = Timestamp.fromDate(startOfMonth);
     const endTimestamp = Timestamp.fromDate(endOfMonth);
+
     const fetchBudgetData = async () => {
       const budgetDocId = `${usuario.uid}_${currentDate.getFullYear()}-${String(
         currentDate.getMonth() + 1
@@ -94,6 +100,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
       }
       return { valorTotal: 0, orcamentosPorCategoria: {} };
     };
+
     const ganhosQuery = query(
       collection(db, "ganhos"),
       where("userId", "==", usuario.uid),
@@ -107,6 +114,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
       );
       setSummaryData((prevData) => ({ ...prevData, totalGanhos }));
     });
+
     const gastosQuery = query(
       collection(db, "gastos"),
       where("userId", "==", usuario.uid),
@@ -115,10 +123,15 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
     );
     const unsubscribeGastos = onSnapshot(gastosQuery, async (gastosSnap) => {
       const budgetData = await fetchBudgetData();
+
       let totalGastos = 0,
-        totalPago = 0;
+        totalPago = 0,
+        totalDividido = 0,
+        totalCartao = 0,
+        totalAVista = 0;
       const gastosPorCategoria = {},
         gastosPendentes = [];
+
       gastosSnap.forEach((doc) => {
         const gasto = doc.data();
         totalGastos += gasto.valor;
@@ -127,13 +140,27 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
         } else {
           gastosPendentes.push({ ...gasto, id: doc.id });
         }
+
+        if (gasto.dividido) {
+          totalDividido += gasto.valor;
+        }
+        if (gasto.metodoPagamento === "Cartão de Crédito") {
+          totalCartao += gasto.valor;
+        } else {
+          totalAVista += gasto.valor;
+        }
+
         gastosPorCategoria[gasto.categoria] =
           (gastosPorCategoria[gasto.categoria] || 0) + gasto.valor;
       });
+
       setSummaryData((prevData) => ({
         ...prevData,
         totalGastos,
         totalPago,
+        totalDividido,
+        totalCartao,
+        totalAVista,
         totalPendente: totalGastos - totalPago,
         gastosPorCategoria,
         gastosPendentes: gastosPendentes.sort(
@@ -144,6 +171,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
       }));
       setLoading(false);
     });
+
     return () => {
       unsubscribeGanhos();
       unsubscribeGastos();
@@ -160,6 +188,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
       new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
     );
   };
+
   const categoryLabels = Object.keys(summaryData.gastosPorCategoria);
   const backgroundColorsKeys = categoryLabels.map(
     (cat) => `${categoryColorMap[cat] || "gray"}.300`
@@ -167,8 +196,10 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
   const borderColorsKeys = categoryLabels.map(
     (cat) => `${categoryColorMap[cat] || "gray"}.500`
   );
+
   const resolvedBackgroundColors = useToken("colors", backgroundColorsKeys);
   const resolvedBorderColors = useToken("colors", borderColorsKeys);
+
   const chartData = {
     labels: categoryLabels,
     datasets: [
@@ -236,7 +267,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
           onClick={goToPreviousMonth}
           aria-label="Mês anterior"
         />
-        <Box mx={8}>
+        <Box mx={4}>
           <DatePicker
             selected={currentDate}
             onChange={(date) => setCurrentDate(date)}
@@ -244,13 +275,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
             showMonthYearPicker
             locale="pt-BR"
             customInput={
-              <Button
-                as={Heading}
-                size="lg"
-                variant="ghost"
-                w="250px"
-                textAlign="center"
-              >
+              <Button as={Heading} size="lg" variant="ghost">
                 {currentDate.toLocaleDateString("pt-BR", {
                   month: "long",
                   year: "numeric",
@@ -311,6 +336,35 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
           <StatLabel>Pendente</StatLabel>
           <StatNumber color="orange.500">
             R$ {summaryData.totalPendente.toFixed(2)}
+          </StatNumber>
+        </Stat>
+      </SimpleGrid>
+
+      <Heading as="h4" size="md" mb={4} mt={8}>
+        Detalhes dos Gastos
+      </Heading>
+      <SimpleGrid
+        columns={{ base: 1, md: 3 }}
+        spacing={{ base: 3, md: 6 }}
+        mb={8}
+      >
+        <Stat p={4} borderWidth="1px" borderRadius="lg">
+          <StatLabel>Total Dividido</StatLabel>
+          <StatNumber>R$ {summaryData.totalDividido.toFixed(2)}</StatNumber>
+          <StatHelpText>
+            R$ {(summaryData.totalDividido / 2).toFixed(2)} para cada
+          </StatHelpText>
+        </Stat>
+        <Stat p={4} borderWidth="1px" borderRadius="lg">
+          <StatLabel>Gastos no Cartão</StatLabel>
+          <StatNumber color="purple.500">
+            R$ {summaryData.totalCartao.toFixed(2)}
+          </StatNumber>
+        </Stat>
+        <Stat p={4} borderWidth="1px" borderRadius="lg">
+          <StatLabel>Gastos à Vista</StatLabel>
+          <StatNumber color="teal.500">
+            R$ {summaryData.totalAVista.toFixed(2)}
           </StatNumber>
         </Stat>
       </SimpleGrid>
@@ -425,4 +479,5 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
     </Box>
   );
 }
+
 export default SummaryDashboard;

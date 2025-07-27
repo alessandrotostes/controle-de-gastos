@@ -9,7 +9,7 @@ import {
 } from "@chakra-ui/react";
 import IncomeForm from "./IncomeForm";
 
-function AddIncomeModal({ isOpen, onClose, usuario, selectedDate }) {
+function AddIncomeModal({ isOpen, onClose, usuario }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay />
@@ -17,11 +17,7 @@ function AddIncomeModal({ isOpen, onClose, usuario, selectedDate }) {
         <ModalHeader>Adicionar Novo Ganho</ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={6}>
-          <IncomeForm
-            usuario={usuario}
-            onSuccess={onClose}
-            selectedDate={selectedDate}
-          />
+          <IncomeForm usuario={usuario} onSuccess={onClose} />
         </ModalBody>
       </ModalContent>
     </Modal>
