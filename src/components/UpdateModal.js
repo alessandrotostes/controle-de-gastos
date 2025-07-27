@@ -20,7 +20,7 @@ import { CheckCircleIcon } from "@chakra-ui/icons";
 // Este é o "número de série" da sua atualização.
 // Quando fizer uma nova alteração no futuro e quiser que o pop-up apareça de novo,
 // basta mudar este número (ex: para "1.1.1").
-export const APP_VERSION = "1.1.1";
+export const APP_VERSION = "1.1.2";
 
 function UpdateModal({ isOpen, onClose }) {
   const handleClose = () => {
@@ -55,9 +55,8 @@ function UpdateModal({ isOpen, onClose }) {
             </ListItem>
             <ListItem>
               <ListIcon as={CheckCircleIcon} color="green.500" />
-              Agora pode marcar gastos como "Pagos" ou "Pendentes" diretamente
-              na lista. Assim, os marcados como "Pagos" são automaticamente
-              enviados para o final da lista.
+              Agora pode marcar gastos como "Pago" diretamente no Dashboard, sem
+              necessidade de abrir a página "Gastos" para fazer isso.
             </ListItem>
           </List>
         </ModalBody>

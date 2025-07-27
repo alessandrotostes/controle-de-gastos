@@ -9,7 +9,8 @@ import { theme } from "./theme";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Configuracoes from "./pages/Configuracoes";
-import NotFound from "./pages/NotFound"; // 1. Importe a nova página
+import NotFound from "./pages/NotFound";
+import ActionPage from "./pages/ActionPage"; // 1. Importe a nova página
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -38,7 +39,6 @@ function App() {
     <ChakraProvider theme={theme}>
       <BrowserRouter>
         <Routes>
-          {/* Rotas Protegidas */}
           <Route
             path="/"
             element={
@@ -56,11 +56,12 @@ function App() {
             }
           />
 
-          {/* Rotas Públicas */}
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Navigate to="/login" />} />
 
-          {/* 2. Rota "Apanha-Tudo" - Deve ser a ÚLTIMA rota da lista */}
+          {/* 2. Adicione a nova rota pública para as ações de email */}
+          <Route path="/action" element={<ActionPage />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

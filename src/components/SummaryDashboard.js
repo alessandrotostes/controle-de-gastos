@@ -8,6 +8,7 @@ import {
   Timestamp,
   doc,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import {
   Box,
@@ -32,15 +33,25 @@ import {
   Skeleton,
   SkeletonText,
   SkeletonCircle,
+  Tooltip,
 } from "@chakra-ui/react";
-import { ArrowLeftIcon, ArrowRightIcon } from "@chakra-ui/icons";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CheckCircleIcon,
+} from "@chakra-ui/icons";
 import { Doughnut } from "react-chartjs-2";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip as ChartTooltip,
+  Legend,
+} from "chart.js";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { ptBR } from "date-fns/locale/pt-BR";
 
 registerLocale("pt-BR", ptBR);
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement, ChartTooltip, Legend);
 
 const formatDate = (timestamp) => {
   if (!timestamp || !timestamp.seconds) return "";
@@ -123,7 +134,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
     );
     const unsubscribeGastos = onSnapshot(gastosQuery, async (gastosSnap) => {
       const budgetData = await fetchBudgetData();
-
       let totalGastos = 0,
         totalPago = 0,
         totalDividido = 0,
@@ -140,7 +150,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
         } else {
           gastosPendentes.push({ ...gasto, id: doc.id });
         }
-
         if (gasto.dividido) {
           totalDividido += gasto.valor;
         }
@@ -149,7 +158,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
         } else {
           totalAVista += gasto.valor;
         }
-
         gastosPorCategoria[gasto.categoria] =
           (gastosPorCategoria[gasto.categoria] || 0) + gasto.valor;
       });
@@ -178,6 +186,15 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
     };
   }, [usuario, currentDate]);
 
+  const handleMarkAsPaid = async (gastoId) => {
+    const gastoDocRef = doc(db, "gastos", gastoId);
+    try {
+      await updateDoc(gastoDocRef, { pago: true });
+    } catch (error) {
+      console.error("Erro ao marcar como pago: ", error);
+    }
+  };
+
   const goToPreviousMonth = () => {
     setCurrentDate(
       new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
@@ -196,10 +213,8 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
   const borderColorsKeys = categoryLabels.map(
     (cat) => `${categoryColorMap[cat] || "gray"}.500`
   );
-
   const resolvedBackgroundColors = useToken("colors", backgroundColorsKeys);
   const resolvedBorderColors = useToken("colors", borderColorsKeys);
-
   const chartData = {
     labels: categoryLabels,
     datasets: [
@@ -467,7 +482,19 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
                       {formatDate(gasto.data)}
                     </Text>
                   </Box>
-                  <Text fontWeight="bold">R$ {gasto.valor.toFixed(2)}</Text>
+                  <HStack>
+                    <Text fontWeight="bold">R$ {gasto.valor.toFixed(2)}</Text>
+                    <Tooltip label="Marcar como pago" placement="top">
+                      <IconButton
+                        icon={<CheckCircleIcon />}
+                        size="sm"
+                        variant="ghost"
+                        colorScheme="green"
+                        aria-label="Marcar como pago"
+                        onClick={() => handleMarkAsPaid(gasto.id)}
+                      />
+                    </Tooltip>
+                  </HStack>
                 </HStack>
               ))}
             </VStack>
