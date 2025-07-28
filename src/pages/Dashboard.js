@@ -1,4 +1,4 @@
-// src/pages/Dashboard.js
+// src/pages/Dashboard.js (Versão de Depuração Corrigida)
 import React, { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebase";
@@ -30,7 +30,6 @@ import {
   TabPanels,
   Tab,
   TabPanel,
-  Divider,
   useDisclosure,
   useColorMode,
   HStack,
@@ -38,7 +37,7 @@ import {
   Select,
   InputGroup,
   InputRightElement,
-} from "@chakra-ui/react";
+} from "@chakra-ui/react"; // 'Divider' foi removido
 import {
   SettingsIcon,
   ArrowLeftIcon,
@@ -51,6 +50,8 @@ import {
 import DatePicker, { registerLocale } from "react-datepicker";
 import { ptBR } from "date-fns/locale/pt-BR";
 registerLocale("pt-BR", ptBR);
+
+// Importação que faltava
 
 function Dashboard({ usuario }) {
   const [categoryColorMap, setCategoryColorMap] = useState({});
@@ -71,37 +72,46 @@ function Dashboard({ usuario }) {
     onOpen: onIncomeOpen,
     onClose: onIncomeClose,
   } = useDisclosure();
-  // 2. Crie o controlador de estado para o modal de atualização
+  // Definição do controlador do UpdateModal que faltava
   const {
     isOpen: isUpdateOpen,
     onOpen: onUpdateOpen,
     onClose: onUpdateClose,
   } = useDisclosure();
 
-  // 3. Lógica para verificar a versão e abrir o modal
   useEffect(() => {
-    // Lê a última versão que o utilizador viu, guardada na memória do navegador
     const lastVersionSeen = localStorage.getItem("lastVersionSeen");
-    // Se a versão guardada for diferente da versão atual da aplicação...
     if (lastVersionSeen !== APP_VERSION) {
-      onUpdateOpen(); // ...abre o pop-up de novidades!
+      onUpdateOpen();
     }
-  }, [onUpdateOpen]); // A dependência garante que esta lógica corre apenas uma vez
+  }, [onUpdateOpen]);
 
   useEffect(() => {
     if (usuario) {
+      console.log("A tentar buscar categorias para o utilizador:", usuario.uid);
       const q = query(
         collection(db, "categorias"),
         where("userId", "==", usuario.uid),
         orderBy("nome")
       );
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const colorMap = {};
-        querySnapshot.forEach((doc) => {
-          colorMap[doc.data().nome] = doc.data().cor;
-        });
-        setCategoryColorMap(colorMap);
-      });
+
+      const unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          console.log(`Encontradas ${querySnapshot.size} categorias.`);
+
+          const colorMap = {};
+          querySnapshot.forEach((doc) => {
+            colorMap[doc.data().nome] = doc.data().cor;
+          });
+
+          console.log("Mapa de cores criado:", colorMap);
+          setCategoryColorMap(colorMap);
+        },
+        (error) => {
+          console.error("Erro ao buscar categorias:", error);
+        }
+      );
       return () => unsubscribe();
     }
   }, [usuario]);
@@ -320,7 +330,6 @@ function Dashboard({ usuario }) {
         usuario={usuario}
       />
 
-      {/* 4. Renderize o novo modal de atualização */}
       <UpdateModal isOpen={isUpdateOpen} onClose={onUpdateClose} />
     </Box>
   );

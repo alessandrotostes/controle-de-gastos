@@ -19,8 +19,8 @@ import { CheckCircleIcon } from "@chakra-ui/icons";
 // --- CONTROLO DA VERSÃO ---
 // Este é o "número de série" da sua atualização.
 // Quando fizer uma nova alteração no futuro e quiser que o pop-up apareça de novo,
-// basta mudar este número (ex: para "1.1.1").
-export const APP_VERSION = "1.1.2";
+// Ultima versão lançada: 1.1.3
+export const APP_VERSION = "1.1.3";
 
 function UpdateModal({ isOpen, onClose }) {
   const handleClose = () => {
@@ -44,19 +44,24 @@ function UpdateModal({ isOpen, onClose }) {
           <List spacing={3}>
             <ListItem>
               <ListIcon as={CheckCircleIcon} color="green.500" />
-              Agora todos os gastos são ordenados data e hora, mostrando o
-              último gasto adicionado como primeiro da lista.
+              Removemos a cor Vermelha da aba de categorias, altere para alguma
+              das outras cores disponíveis para melhor visualização no Orçamento
+              e Gráfico.
             </ListItem>
             <ListItem>
               <ListIcon as={CheckCircleIcon} color="green.500" />
-              Agora temos a barra de "Orçamento Total" sendo a soma de todos os
-              orçamentos por categoria, fazendo com que você tenha uma visão
-              mais clara de todo o orçamento mensal.
+              Agora quando um gasto de categoria ultrapassa o valor estimado, o
+              aplicativo mostra a cor "vermelha", como forma de mostrar gasto
+              excedente.
             </ListItem>
             <ListItem>
               <ListIcon as={CheckCircleIcon} color="green.500" />
               Agora pode marcar gastos como "Pago" diretamente no Dashboard, sem
               necessidade de abrir a página "Gastos" para fazer isso.
+            </ListItem>
+            <ListItem>
+              <ListIcon as={CheckCircleIcon} color="green.500" />
+              Correções de bugs e melhorias de desempenho.
             </ListItem>
           </List>
         </ModalBody>

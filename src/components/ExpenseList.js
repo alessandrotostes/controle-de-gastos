@@ -186,105 +186,106 @@ function ExpenseList({ usuario, currentDate, filtroCategoria, filtroTexto }) {
         </Text>
       ) : (
         <VStack spacing={4} align="stretch">
-          {gastosFiltrados.map((gasto) => (
-            <Flex
-              key={gasto.id}
-              p={4}
-              borderWidth="1px"
-              borderRadius="lg"
-              align={{ base: "flex-start", md: "center" }}
-              justify="space-between"
-              opacity={gasto.pago ? 0.6 : 1}
-              direction={{ base: "column", md: "row" }}
-            >
-              <Box flex="1" mb={{ base: 3, md: 0 }} mr={{ md: 4 }}>
-                <Text
-                  fontWeight="bold"
-                  noOfLines={1}
-                  textDecoration={gasto.pago ? "line-through" : "none"}
-                >
-                  {gasto.descricao}
-                </Text>
-                <Text fontSize="sm" color="gray.500">
-                  {formatDate(gasto.data)}
-                </Text>
-              </Box>
-              <HStack
-                w={{ base: "full", md: "auto" }}
-                justifyContent="space-between"
-                alignItems="center"
+          {gastosFiltrados.map((gasto) => {
+            // AQUI ESTÁ A LÓGICA DE CORREÇÃO
+            const categoryColor = categoryColorMap[gasto.categoria] || "gray";
+            const baseColorScheme = categoryColor.split(".")[0];
+
+            return (
+              <Flex
+                key={gasto.id}
+                p={4}
+                borderWidth="1px"
+                borderRadius="lg"
+                align={{ base: "flex-start", md: "center" }}
+                justify="space-between"
+                opacity={gasto.pago ? 0.6 : 1}
+                direction={{ base: "column", md: "row" }}
               >
-                <HStack flex="1" spacing={4}>
-                  <VStack align="flex-start" spacing={1}>
-                    <Text fontWeight="bold">R$ {gasto.valor.toFixed(2)}</Text>
-                    {gasto.dividido && (
-                      <Text fontSize="xs" color="gray.600">
-                        (R$ {(gasto.valor / 2).toFixed(2)} p/ pessoa)
-                      </Text>
-                    )}
-                    <HStack>
-                      <Tag
-                        colorScheme={
-                          categoryColorMap[gasto.categoria] || "gray"
-                        }
-                        size="sm"
-                      >
-                        {gasto.categoria}
-                      </Tag>
-                      <Tag
-                        size="sm"
-                        variant="solid"
-                        colorScheme={gasto.pago ? "green" : "yellow"}
-                        onClick={() => handleTogglePago(gasto.id, gasto.pago)}
-                        cursor="pointer"
-                      >
-                        {gasto.pago ? "Pago" : "Pendente"}
-                      </Tag>
-                    </HStack>
-                  </VStack>
-                  <Tooltip
-                    label={gasto.metodoPagamento || "À Vista"}
-                    placement="top"
+                <Box flex="1" mb={{ base: 3, md: 0 }} mr={{ md: 4 }}>
+                  <Text
+                    fontWeight="bold"
+                    noOfLines={1}
+                    textDecoration={gasto.pago ? "line-through" : "none"}
                   >
-                    {/* AQUI ESTÁ A MUDANÇA: A cor agora é dinâmica */}
-                    <Box
-                      as="span"
-                      fontSize="xl"
-                      color={
-                        gasto.metodoPagamento === "Cartão de Crédito"
-                          ? "purple.400"
-                          : "green.400"
-                      }
-                    >
-                      {gasto.metodoPagamento === "Cartão de Crédito" ? (
-                        <FaCreditCard />
-                      ) : (
-                        <FaMoneyBillWave />
+                    {gasto.descricao}
+                  </Text>
+                  <Text fontSize="sm" color="gray.500">
+                    {formatDate(gasto.data)}
+                  </Text>
+                </Box>
+                <HStack
+                  w={{ base: "full", md: "auto" }}
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
+                  <HStack flex="1" spacing={4}>
+                    <VStack align="flex-start" spacing={1}>
+                      <Text fontWeight="bold">R$ {gasto.valor.toFixed(2)}</Text>
+                      {gasto.dividido && (
+                        <Text fontSize="xs" color="gray.600">
+                          (R$ {(gasto.valor / 2).toFixed(2)} p/ pessoa)
+                        </Text>
                       )}
-                    </Box>
-                  </Tooltip>
+                      <HStack>
+                        {/* A Tag agora usa a cor base extraída */}
+                        <Tag colorScheme={baseColorScheme} size="sm">
+                          {gasto.categoria}
+                        </Tag>
+                        <Tag
+                          size="sm"
+                          variant="solid"
+                          colorScheme={gasto.pago ? "green" : "yellow"}
+                          onClick={() => handleTogglePago(gasto.id, gasto.pago)}
+                          cursor="pointer"
+                        >
+                          {gasto.pago ? "Pago" : "Pendente"}
+                        </Tag>
+                      </HStack>
+                    </VStack>
+                    <Tooltip
+                      label={gasto.metodoPagamento || "À Vista"}
+                      placement="top"
+                    >
+                      <Box
+                        as="span"
+                        fontSize="xl"
+                        color={
+                          gasto.metodoPagamento === "Cartão de Crédito"
+                            ? "purple.500"
+                            : "green.400"
+                        }
+                      >
+                        {gasto.metodoPagamento === "Cartão de Crédito" ? (
+                          <FaCreditCard />
+                        ) : (
+                          <FaMoneyBillWave />
+                        )}
+                      </Box>
+                    </Tooltip>
+                  </HStack>
+                  <VStack>
+                    <IconButton
+                      icon={<EditIcon />}
+                      size="sm"
+                      variant="ghost"
+                      colorScheme="yellow"
+                      onClick={() => handleEditClick(gasto)}
+                      aria-label="Editar gasto"
+                    />
+                    <IconButton
+                      icon={<DeleteIcon />}
+                      size="sm"
+                      variant="ghost"
+                      colorScheme="red"
+                      onClick={() => handleDeleteClick(gasto.id)}
+                      aria-label="Excluir gasto"
+                    />
+                  </VStack>
                 </HStack>
-                <VStack>
-                  <IconButton
-                    icon={<EditIcon />}
-                    size="sm"
-                    variant="ghost"
-                    colorScheme="yellow"
-                    onClick={() => handleEditClick(gasto)}
-                    aria-label="Editar gasto"
-                  />
-                  <IconButton
-                    icon={<DeleteIcon />}
-                    size="sm"
-                    variant="ghost"
-                    colorScheme="red"
-                    onClick={() => handleDeleteClick(gasto.id)}
-                    aria-label="Excluir gasto"
-                  />
-                </VStack>
-              </HStack>
-            </Flex>
-          ))}
+              </Flex>
+            );
+          })}
         </VStack>
       )}
       {gastoParaEditar && (

@@ -1,10 +1,11 @@
-// src/components/CategoryManager.js - COM CORES TRADUZIDAS
+// src/components/CategoryManager.js
 import React, { useState, useEffect, useRef } from "react";
 import { db } from "../firebase";
 import {
   collection,
   query,
   where,
+  orderBy,
   onSnapshot,
   addDoc,
   updateDoc,
@@ -41,24 +42,29 @@ import {
 } from "@chakra-ui/react";
 import { EditIcon, DeleteIcon } from "@chakra-ui/icons";
 
-// 1. Dicionário de cores com nomes em português
 const availableColors = [
-  { nome: "Cinza", valor: "gray" },
-  { nome: "Vermelho", valor: "red" },
-  { nome: "Laranja", valor: "orange" },
-  { nome: "Amarelo", valor: "yellow" },
-  { nome: "Verde", valor: "green" },
-  { nome: "Verde-azulado", valor: "teal" },
-  { nome: "Azul", valor: "blue" },
-  { nome: "Ciano", valor: "cyan" },
-  { nome: "Roxo", valor: "purple" },
-  { nome: "Rosa", valor: "pink" },
+  { nome: "Laranja", valor: "orange.500" },
+  { nome: "Amarelo", valor: "yellow.500" },
+  { nome: "Verde", valor: "green.500" },
+  { nome: "Verde-azulado", valor: "teal.500" },
+  { nome: "Azul", valor: "blue.500" },
+  { nome: "Ciano", valor: "cyan.500" },
+  { nome: "Roxo", valor: "purple.500" },
+  { nome: "Rosa", valor: "pink.500" },
+  { nome: "Cinza", valor: "gray.500" },
+  { nome: "Marrom", valor: "brown.500" },
+  // --- Novas cores adicionadas ---
+  { nome: "Verde Claro", valor: "green.300" },
+  { nome: "Azul Escuro", valor: "blue.700" },
+  { nome: "Amarelo Queimado", valor: "yellow.600" },
+  { nome: "Roxo Escuro", valor: "purple.800" },
+  { nome: "Rosa Claro", valor: "pink.300" },
 ];
 
 function CategoryManager({ usuario }) {
   const [categories, setCategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [newCategoryColor, setNewCategoryColor] = useState("gray");
+  const [newCategoryColor, setNewCategoryColor] = useState("gray.500");
 
   const [currentCategory, setCurrentCategory] = useState(null);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
@@ -77,11 +83,11 @@ function CategoryManager({ usuario }) {
   const toast = useToast();
   const cancelRef = useRef();
 
-  // Buscar categorias (sem alterações)
   useEffect(() => {
     const q = query(
       collection(db, "categorias"),
-      where("userId", "==", usuario.uid)
+      where("userId", "==", usuario.uid),
+      orderBy("nome")
     );
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const cats = querySnapshot.docs.map((doc) => ({
@@ -93,7 +99,6 @@ function CategoryManager({ usuario }) {
     return () => unsubscribe();
   }, [usuario.uid]);
 
-  // Funções de CRUD (sem alterações na lógica)
   const handleAddCategory = async (e) => {
     e.preventDefault();
     if (newCategoryName.trim() === "") return;
@@ -110,6 +115,7 @@ function CategoryManager({ usuario }) {
       isClosable: true,
     });
   };
+
   const handleEditClick = (category) => {
     setCurrentCategory(category);
     onEditOpen();
@@ -150,7 +156,6 @@ function CategoryManager({ usuario }) {
       <Heading as="h2" size="lg" mb={6}>
         Gerir Categorias
       </Heading>
-
       <VStack
         as="form"
         onSubmit={handleAddCategory}
@@ -167,7 +172,6 @@ function CategoryManager({ usuario }) {
         </FormControl>
         <FormControl>
           <FormLabel>Cor</FormLabel>
-          {/* 2. Menu de seleção atualizado para usar os nomes em português */}
           <Select
             value={newCategoryColor}
             onChange={(e) => setNewCategoryColor(e.target.value)}
@@ -183,7 +187,6 @@ function CategoryManager({ usuario }) {
           Adicionar Categoria
         </Button>
       </VStack>
-
       <VStack spacing={4} align="stretch">
         {categories.map((cat) => (
           <HStack
@@ -193,14 +196,9 @@ function CategoryManager({ usuario }) {
             borderRadius="md"
             justifyContent="space-between"
           >
-            {/* 3. Bónus: Exibição da cor + nome */}
             <HStack>
-              <Box
-                as="span"
-                boxSize="12px"
-                bg={`${cat.cor}.500`}
-                borderRadius="full"
-              />
+              {/* 2. CÓDIGO CORRIGIDO: Usa o valor da cor diretamente, sem adicionar '.500' */}
+              <Box as="span" boxSize="12px" bg={cat.cor} borderRadius="full" />
               <Text fontWeight="bold">{cat.nome}</Text>
             </HStack>
             <HStack>
@@ -219,7 +217,6 @@ function CategoryManager({ usuario }) {
           </HStack>
         ))}
       </VStack>
-
       {currentCategory && (
         <Modal isOpen={isEditOpen} onClose={onEditClose}>
           <ModalOverlay />
@@ -241,7 +238,6 @@ function CategoryManager({ usuario }) {
               </FormControl>
               <FormControl mt={4}>
                 <FormLabel>Cor</FormLabel>
-                {/* 2. Menu de seleção atualizado também no modal de edição */}
                 <Select
                   value={currentCategory.cor}
                   onChange={(e) =>
@@ -270,7 +266,6 @@ function CategoryManager({ usuario }) {
           </ModalContent>
         </Modal>
       )}
-
       {categoryToDelete && (
         <AlertDialog
           isOpen={isDeleteOpen}
@@ -299,5 +294,4 @@ function CategoryManager({ usuario }) {
     </Box>
   );
 }
-
 export default CategoryManager;
