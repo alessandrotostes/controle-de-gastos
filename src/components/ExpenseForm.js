@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   collection,
   addDoc,
-  serverTimestamp,
   query,
   where,
   onSnapshot,
@@ -25,17 +24,28 @@ import {
   Radio,
   useToast,
 } from "@chakra-ui/react";
+import DatePicker, { registerLocale } from "react-datepicker";
+import { ptBR } from "date-fns/locale/pt-BR";
+registerLocale("pt-BR", ptBR);
 
-function ExpenseForm({ usuario, onSuccess }) {
+// A prop 'selectedDate' vem do Dashboard (ex: 1 de Agosto de 2025)
+function ExpenseForm({ usuario, onSuccess, selectedDate }) {
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("");
   const [categoria, setCategoria] = useState("");
   const [userCategories, setUserCategories] = useState([]);
   const [dividido, setDividido] = useState(false);
-  // 1. ALTERAÇÃO PRINCIPAL: O estado 'pago' agora começa como 'false'.
   const [pago, setPago] = useState(false);
   const [metodoPagamento, setMetodoPagamento] = useState("À Vista");
+  const [data, setData] = useState(new Date()); // 1. Novo estado para a data do formulário
   const toast = useToast();
+
+  // 2. useEffect para definir a data padrão quando o modal abre
+  useEffect(() => {
+    if (selectedDate) {
+      setData(selectedDate);
+    }
+  }, [selectedDate]);
 
   useEffect(() => {
     if (usuario) {
@@ -69,7 +79,7 @@ function ExpenseForm({ usuario, onSuccess }) {
         dividido,
         pago,
         metodoPagamento: metodoPagamento,
-        data: serverTimestamp(),
+        data: data, // 3. Usa a data do estado, em vez de serverTimestamp()
         userId: usuario.uid,
       });
       toast({
@@ -83,7 +93,6 @@ function ExpenseForm({ usuario, onSuccess }) {
       setValor("");
       setCategoria("");
       setDividido(false);
-      // 2. ALTERAÇÃO NA LIMPEZA: O estado 'pago' volta a ser 'false'.
       setPago(false);
       setMetodoPagamento("À Vista");
       if (onSuccess) {
@@ -96,6 +105,17 @@ function ExpenseForm({ usuario, onSuccess }) {
 
   return (
     <VStack as="form" onSubmit={handleSubmit} spacing={4} w="full">
+      {/* 4. Novo campo de Data no topo do formulário */}
+      <FormControl isRequired>
+        <FormLabel>Data do Gasto</FormLabel>
+        <DatePicker
+          selected={data}
+          onChange={(date) => setData(date)}
+          dateFormat="dd/MM/yyyy"
+          locale="pt-BR"
+          customInput={<Input />}
+        />
+      </FormControl>
       <FormControl isRequired>
         <FormLabel>Descrição</FormLabel>
         <Input
@@ -131,7 +151,6 @@ function ExpenseForm({ usuario, onSuccess }) {
           ))}
         </Select>
       </FormControl>
-
       <FormControl>
         <FormLabel>Método de Pagamento</FormLabel>
         <RadioGroup onChange={setMetodoPagamento} value={metodoPagamento}>
@@ -141,7 +160,6 @@ function ExpenseForm({ usuario, onSuccess }) {
           </HStack>
         </RadioGroup>
       </FormControl>
-
       <HStack w="full" justify="space-between" pt={2}>
         <FormControl as={HStack}>
           <FormLabel htmlFor="dividir-gasto" mb="0">

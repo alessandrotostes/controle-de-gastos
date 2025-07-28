@@ -53,170 +53,15 @@ registerLocale("pt-BR", ptBR);
 ChartJS.register(ArcElement, ChartTooltip, Legend);
 
 const formatDate = (timestamp) => {
-  /* ... */
+  if (!timestamp || !timestamp.seconds) return "";
+  const date = new Date(timestamp.seconds * 1000);
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+  }).format(date);
 };
 
 function SummaryDashboard({ usuario, categoryColorMap }) {
-  const [summaryData, setSummaryData] = useState({
-    /* ... */
-  });
-  const [loading, setLoading] = useState(true);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const hoverBg = useColorModeValue("gray.50", "gray.700");
-
-  useEffect(() => {
-    /* ... */
-  }, [usuario, currentDate]);
-
-  const handleMarkAsPaid = async (gastoId) => {
-    /* ... */
-  };
-  const goToPreviousMonth = () => {
-    /* ... */
-  };
-  const goToNextMonth = () => {
-    /* ... */
-  };
-
-  // --- INÍCIO DA LÓGICA DE CORES ATUALIZADA ---
-
-  // 1. Resolve as cores para o GRÁFICO (como antes)
-  const chartCategoryLabels = Object.keys(summaryData.gastosPorCategoria);
-  const chartBackgroundColorsKeys = chartCategoryLabels.map(
-    (cat) => categoryColorMap[cat] || "gray.300"
-  );
-  const chartBorderColorsKeys = chartCategoryLabels.map((cat) => {
-    const color = categoryColorMap[cat] || "gray.500";
-    const baseColor = color.split(".")[0];
-    return `${baseColor}.500`;
-  });
-  const resolvedChartBackgroundColors = useToken(
-    "colors",
-    chartBackgroundColorsKeys
-  );
-  const resolvedChartBorderColors = useToken("colors", chartBorderColorsKeys);
-
-  // 2. Resolve as cores para as BARRAS DE PROGRESSO
-  const budgetCategoryLabels = Object.keys(summaryData.orcamentosPorCategoria);
-  const budgetBackgroundColorsKeys = budgetCategoryLabels.map(
-    (cat) => categoryColorMap[cat] || "gray.500"
-  );
-  const resolvedBudgetBackgroundColors = useToken(
-    "colors",
-    budgetBackgroundColorsKeys
-  );
-
-  // 3. Cria um mapa de nomes de categoria para cores resolvidas (HEX, RGB, etc.)
-  const resolvedBudgetColorMap = {};
-  budgetCategoryLabels.forEach((label, index) => {
-    resolvedBudgetColorMap[label] = resolvedBudgetBackgroundColors[index];
-  });
-
-  // --- FIM DA LÓGICA DE CORES ATUALIZADA ---
-
-  const chartData = {
-    labels: chartCategoryLabels,
-    datasets: [
-      {
-        label: "Gastos por Categoria",
-        data: Object.values(summaryData.gastosPorCategoria),
-        backgroundColor: resolvedChartBackgroundColors,
-        borderColor: resolvedChartBorderColors,
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  if (loading) {
-    return <Box>{/* ... skeleton ... */}</Box>;
-  }
-
-  const hasCategoryBudgets = Object.values(
-    summaryData.orcamentosPorCategoria
-  ).some((budget) => budget > 0);
-  const saldoFinal = summaryData.totalGanhos - summaryData.totalGastos;
-
-  return (
-    <Box>
-      {/* ... (Seletor de Mês e Stats sem alterações) ... */}
-
-      {(summaryData.orcamentoTotal > 0 || hasCategoryBudgets) && (
-        <Box mb={8} p={4} borderWidth="1px" borderRadius="lg">
-          <Heading as="h4" size="md" mb={4}>
-            Progresso do Orçamento
-          </Heading>
-          <VStack spacing={4} align="stretch">
-            {summaryData.orcamentoTotal > 0 && (
-              <Box>
-                <Flex justify="space-between" mb={1}>
-                  <Text fontWeight="bold">Orçamento Total</Text>
-                  <Text fontSize="sm" fontWeight="bold">
-                    {(
-                      (summaryData.totalGastos / summaryData.orcamentoTotal) *
-                      100
-                    ).toFixed(0)}
-                    %
-                  </Text>
-                </Flex>
-                <Progress
-                  value={
-                    (summaryData.totalGastos / summaryData.orcamentoTotal) * 100
-                  }
-                  size="lg"
-                  colorScheme={
-                    summaryData.totalGastos > summaryData.orcamentoTotal
-                      ? "red"
-                      : "green"
-                  }
-                  borderRadius="md"
-                />
-              </Box>
-            )}
-            {Object.entries(summaryData.orcamentosPorCategoria)
-              .filter(([_, budget]) => budget > 0)
-              .map(([categoria, orcamento]) => {
-                const gastoCategoria =
-                  summaryData.gastosPorCategoria[categoria] || 0;
-                const percentagem = (gastoCategoria / orcamento) * 100;
-                // 4. Usa a cor resolvida específica
-                const specificColor = resolvedBudgetColorMap[categoria];
-                return (
-                  <Box key={categoria}>
-                    <Flex justify="space-between" mb={1}>
-                      <Text>{categoria}</Text>
-                      <Text fontSize="sm">
-                        R$ {gastoCategoria.toFixed(2)} de R${" "}
-                        {orcamento.toFixed(2)}
-                      </Text>
-                    </Flex>
-                    {/* 5. Remove 'colorScheme' e usa a propriedade 'sx' para um estilo exato */}
-                    <Progress
-                      value={percentagem}
-                      size="sm"
-                      borderRadius="md"
-                      sx={{
-                        "& > div": {
-                          backgroundColor:
-                            percentagem > 100 ? "red.500" : specificColor,
-                        },
-                      }}
-                    />
-                  </Box>
-                );
-              })}
-          </VStack>
-        </Box>
-      )}
-
-      {/* ... (Resto do componente: Gráfico e Lista de Pendentes sem alterações) ... */}
-    </Box>
-  );
-}
-
-// Para garantir que nada falha, cole o código 100% completo aqui
-// --- INÍCIO DO CÓDIGO COMPLETO ---
-
-function FullSummaryDashboard({ usuario, categoryColorMap }) {
   const [summaryData, setSummaryData] = useState({
     totalGanhos: 0,
     totalGastos: 0,
@@ -237,6 +82,7 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
   useEffect(() => {
     if (!usuario) return;
     setLoading(true);
+
     const startOfMonth = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
@@ -252,6 +98,7 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
     );
     const startTimestamp = Timestamp.fromDate(startOfMonth);
     const endTimestamp = Timestamp.fromDate(endOfMonth);
+
     const fetchBudgetData = async () => {
       const budgetDocId = `${usuario.uid}_${currentDate.getFullYear()}-${String(
         currentDate.getMonth() + 1
@@ -263,6 +110,7 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
       }
       return { valorTotal: 0, orcamentosPorCategoria: {} };
     };
+
     const ganhosQuery = query(
       collection(db, "ganhos"),
       where("userId", "==", usuario.uid),
@@ -276,6 +124,7 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
       );
       setSummaryData((prevData) => ({ ...prevData, totalGanhos }));
     });
+
     const gastosQuery = query(
       collection(db, "gastos"),
       where("userId", "==", usuario.uid),
@@ -291,6 +140,7 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
         totalAVista = 0;
       const gastosPorCategoria = {},
         gastosPendentes = [];
+
       gastosSnap.forEach((doc) => {
         const gasto = doc.data();
         totalGastos += gasto.valor;
@@ -310,6 +160,7 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
         gastosPorCategoria[gasto.categoria] =
           (gastosPorCategoria[gasto.categoria] || 0) + gasto.valor;
       });
+
       setSummaryData((prevData) => ({
         ...prevData,
         totalGastos,
@@ -327,6 +178,7 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
       }));
       setLoading(false);
     });
+
     return () => {
       unsubscribeGanhos();
       unsubscribeGastos();
@@ -334,8 +186,14 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
   }, [usuario, currentDate]);
 
   const handleMarkAsPaid = async (gastoId) => {
-    await updateDoc(doc(db, "gastos", gastoId), { pago: true });
+    const gastoDocRef = doc(db, "gastos", gastoId);
+    try {
+      await updateDoc(gastoDocRef, { pago: true });
+    } catch (error) {
+      console.error("Erro ao marcar como pago: ", error);
+    }
   };
+
   const goToPreviousMonth = () => {
     setCurrentDate(
       new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
@@ -347,49 +205,85 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
     );
   };
 
-  const chartCategoryLabels = Object.keys(summaryData.gastosPorCategoria);
-  const chartBackgroundColorsKeys = chartCategoryLabels.map(
+  const categoryLabels = Object.keys(summaryData.gastosPorCategoria);
+  const backgroundColorsKeys = categoryLabels.map(
     (cat) => categoryColorMap[cat] || "gray.300"
   );
-  const chartBorderColorsKeys = chartCategoryLabels.map((cat) => {
+  const borderColorsKeys = categoryLabels.map((cat) => {
     const color = categoryColorMap[cat] || "gray.500";
     const baseColor = color.split(".")[0];
-    return `${baseColor}.500`;
+    return `${baseColor}.800`;
   });
-  const resolvedChartBackgroundColors = useToken(
-    "colors",
-    chartBackgroundColorsKeys
-  );
-  const resolvedChartBorderColors = useToken("colors", chartBorderColorsKeys);
 
+  const resolvedBackgroundColors = useToken("colors", backgroundColorsKeys);
+  const resolvedBorderColors = useToken("colors", borderColorsKeys);
+
+  // Resolve budget colors for categories
   const budgetCategoryLabels = Object.keys(summaryData.orcamentosPorCategoria);
-  const budgetBackgroundColorsKeys = budgetCategoryLabels.map(
-    (cat) => categoryColorMap[cat] || "gray.500"
+  const budgetColorsKeys = budgetCategoryLabels.map(
+    (cat) => categoryColorMap[cat] || "gray.300"
   );
-  const resolvedBudgetBackgroundColors = useToken(
-    "colors",
-    budgetBackgroundColorsKeys
+  const resolvedBudgetColors = useToken("colors", budgetColorsKeys);
+  const resolvedBudgetColorMap = budgetCategoryLabels.reduce(
+    (acc, cat, idx) => {
+      acc[cat] = resolvedBudgetColors[idx];
+      return acc;
+    },
+    {}
   );
-  const resolvedBudgetColorMap = {};
-  budgetCategoryLabels.forEach((label, index) => {
-    resolvedBudgetColorMap[label] = resolvedBudgetBackgroundColors[index];
-  });
 
   const chartData = {
-    labels: chartCategoryLabels,
+    labels: categoryLabels,
     datasets: [
       {
         label: "Gastos por Categoria",
         data: Object.values(summaryData.gastosPorCategoria),
-        backgroundColor: resolvedChartBackgroundColors,
-        borderColor: resolvedChartBorderColors,
+        backgroundColor: resolvedBackgroundColors,
+        borderColor: resolvedBorderColors,
         borderWidth: 1,
       },
     ],
   };
 
   if (loading) {
-    return <Box>{/* ... skeleton ... */}</Box>;
+    return (
+      <Box>
+        <Flex justify="center" align="center" mb={6}>
+          <SkeletonCircle size="10" />
+          <Skeleton height="40px" width="250px" mx={6} />
+          <SkeletonCircle size="10" />
+        </Flex>
+        <SimpleGrid
+          columns={{ base: 2, md: 4 }}
+          spacing={{ base: 3, md: 6 }}
+          mb={8}
+        >
+          <Box p={4} borderWidth="1px" borderRadius="lg">
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="2" />
+          </Box>
+          <Box p={4} borderWidth="1px" borderRadius="lg">
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="2" />
+          </Box>
+          <Box p={4} borderWidth="1px" borderRadius="lg">
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="2" />
+          </Box>
+          <Box p={4} borderWidth="1px" borderRadius="lg">
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="2" />
+          </Box>
+        </SimpleGrid>
+        <Flex direction={{ base: "column", lg: "row" }} gap={8}>
+          <Box flex="1" align="center">
+            <Skeleton height="24px" width="220px" mb={4} />
+            <SkeletonCircle size="250px" />
+          </Box>
+          <Divider orientation={{ base: "horizontal", lg: "vertical" }} />
+          <Box flex="1">
+            <Skeleton height="24px" width="220px" mb={4} />
+            <SkeletonText noOfLines={5} spacing="4" />
+          </Box>
+        </Flex>
+      </Box>
+    );
   }
 
   const hasCategoryBudgets = Object.values(
@@ -400,7 +294,11 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
   return (
     <Box>
       <Flex justify="center" align="center" mb={6}>
-        <IconButton icon={<ArrowLeftIcon />} onClick={goToPreviousMonth} />
+        <IconButton
+          icon={<ArrowLeftIcon />}
+          onClick={goToPreviousMonth}
+          aria-label="Mês anterior"
+        />
         <Box mx={4}>
           <DatePicker
             selected={currentDate}
@@ -418,8 +316,13 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
             }
           />
         </Box>
-        <IconButton icon={<ArrowRightIcon />} onClick={goToNextMonth} />
+        <IconButton
+          icon={<ArrowRightIcon />}
+          onClick={goToNextMonth}
+          aria-label="Próximo mês"
+        />
       </Flex>
+
       <Stat
         p={6}
         borderWidth="1px"
@@ -440,6 +343,7 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
           Após todos os gastos do mês
         </StatHelpText>
       </Stat>
+
       <SimpleGrid
         columns={{ base: 1, sm: 3 }}
         spacing={{ base: 3, md: 6 }}
@@ -467,6 +371,7 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
           </StatNumber>
         </Stat>
       </SimpleGrid>
+
       <Heading as="h4" size="md" mb={4} mt={8}>
         Detalhes dos Gastos
       </Heading>
@@ -495,6 +400,7 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
           </StatNumber>
         </Stat>
       </SimpleGrid>
+
       {(summaryData.orcamentoTotal > 0 || hasCategoryBudgets) && (
         <Box mb={8} p={4} borderWidth="1px" borderRadius="lg">
           <Heading as="h4" size="md" mb={4}>
@@ -560,6 +466,7 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
           </VStack>
         </Box>
       )}
+
       <Flex direction={{ base: "column", lg: "row" }} gap={8}>
         <Box flex="1">
           <Heading as="h4" size="md" mb={4}>
@@ -580,7 +487,6 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
           </Heading>
           {summaryData.gastosPendentes.length > 0 ? (
             <VStack align="stretch" spacing={3}>
-              {" "}
               {summaryData.gastosPendentes.map((gasto) => (
                 <HStack
                   key={gasto.id}
@@ -609,7 +515,7 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
                     </Tooltip>
                   </HStack>
                 </HStack>
-              ))}{" "}
+              ))}
             </VStack>
           ) : (
             <Text>Nenhum gasto pendente para este mês. Ótimo trabalho!</Text>
@@ -619,5 +525,5 @@ function FullSummaryDashboard({ usuario, categoryColorMap }) {
     </Box>
   );
 }
-export default FullSummaryDashboard;
-// Lembre-se de renomear a função para SummaryDashboard
+
+export default SummaryDashboard;

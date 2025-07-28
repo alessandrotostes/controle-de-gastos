@@ -52,12 +52,11 @@ const availableColors = [
   { nome: "Roxo", valor: "purple.500" },
   { nome: "Rosa", valor: "pink.500" },
   { nome: "Cinza", valor: "gray.500" },
-  { nome: "Marrom", valor: "brown.500" },
   // --- Novas cores adicionadas ---
   { nome: "Verde Claro", valor: "green.300" },
-  { nome: "Azul Escuro", valor: "blue.700" },
-  { nome: "Amarelo Queimado", valor: "yellow.600" },
-  { nome: "Roxo Escuro", valor: "purple.800" },
+  { nome: "Azul Escuro", valor: "blue.800" },
+  { nome: "Amarelo Queimado", valor: "yellow.800" },
+  { nome: "Roxo Escuro", valor: "purple.900" },
   { nome: "Rosa Claro", valor: "pink.300" },
 ];
 
