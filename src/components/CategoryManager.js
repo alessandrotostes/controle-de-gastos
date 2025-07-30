@@ -5,7 +5,6 @@ import {
   collection,
   query,
   where,
-  orderBy,
   onSnapshot,
   addDoc,
   updateDoc,
@@ -42,6 +41,7 @@ import {
 } from "@chakra-ui/react";
 import { EditIcon, DeleteIcon } from "@chakra-ui/icons";
 
+// A sua lista de cores personalizada foi mantida!
 const availableColors = [
   { nome: "Laranja", valor: "orange.500" },
   { nome: "Amarelo", valor: "yellow.500" },
@@ -52,7 +52,6 @@ const availableColors = [
   { nome: "Roxo", valor: "purple.500" },
   { nome: "Rosa", valor: "pink.500" },
   { nome: "Cinza", valor: "gray.500" },
-  // --- Novas cores adicionadas ---
   { nome: "Verde Claro", valor: "green.300" },
   { nome: "Azul Escuro", valor: "blue.800" },
   { nome: "Amarelo Queimado", valor: "yellow.800" },
@@ -83,20 +82,25 @@ function CategoryManager({ usuario }) {
   const cancelRef = useRef();
 
   useEffect(() => {
+    // Verifica se temos o perfil completo do utilizador antes de fazer a consulta
+    if (!usuario || !usuario.familiaId) return;
+
+    // --- ALTERAÇÃO 1: A consulta agora filtra por 'familiaId' ---
     const q = query(
       collection(db, "categorias"),
-      where("userId", "==", usuario.uid),
-      orderBy("nome")
+      where("familiaId", "==", usuario.familiaId)
     );
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const cats = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
+      // Ordena alfabeticamente no cliente para não precisar de um novo índice no Firestore
+      cats.sort((a, b) => a.nome.localeCompare(b.nome));
       setCategories(cats);
     });
     return () => unsubscribe();
-  }, [usuario.uid]);
+  }, [usuario]);
 
   const handleAddCategory = async (e) => {
     e.preventDefault();
@@ -104,7 +108,8 @@ function CategoryManager({ usuario }) {
     await addDoc(collection(db, "categorias"), {
       nome: newCategoryName,
       cor: newCategoryColor,
-      userId: usuario.uid,
+      // --- ALTERAÇÃO 2: Guardamos o 'familiaId' em vez do 'userId' ---
+      familiaId: usuario.familiaId,
     });
     setNewCategoryName("");
     toast({
@@ -196,7 +201,6 @@ function CategoryManager({ usuario }) {
             justifyContent="space-between"
           >
             <HStack>
-              {/* 2. CÓDIGO CORRIGIDO: Usa o valor da cor diretamente, sem adicionar '.500' */}
               <Box as="span" boxSize="12px" bg={cat.cor} borderRadius="full" />
               <Text fontWeight="bold">{cat.nome}</Text>
             </HStack>
@@ -293,4 +297,5 @@ function CategoryManager({ usuario }) {
     </Box>
   );
 }
+
 export default CategoryManager;

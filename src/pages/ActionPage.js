@@ -214,7 +214,7 @@ function ActionPage() {
         return (
           <Alert status="success" borderRadius="md">
             <AlertIcon />
-            Palavra-passe alterada com sucesso! A redirecionar...
+            Palavra-passe alterada com sucesso! Redirecionando...
           </Alert>
         );
       case "invalid":

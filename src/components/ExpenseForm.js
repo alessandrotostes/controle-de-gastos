@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import {
   collection,
   addDoc,
+  serverTimestamp,
   query,
   where,
   onSnapshot,
-  orderBy,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import {
@@ -24,12 +24,9 @@ import {
   Radio,
   useToast,
 } from "@chakra-ui/react";
-import DatePicker, { registerLocale } from "react-datepicker";
-import { ptBR } from "date-fns/locale/pt-BR";
-registerLocale("pt-BR", ptBR);
+import DatePicker from "react-datepicker";
 
-// A prop 'selectedDate' vem do Dashboard (ex: 1 de Agosto de 2025)
-function ExpenseForm({ usuario, onSuccess, selectedDate }) {
+function ExpenseForm({ usuario, onSuccess }) {
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -37,28 +34,21 @@ function ExpenseForm({ usuario, onSuccess, selectedDate }) {
   const [dividido, setDividido] = useState(false);
   const [pago, setPago] = useState(false);
   const [metodoPagamento, setMetodoPagamento] = useState("À Vista");
-  const [data, setData] = useState(new Date()); // 1. Novo estado para a data do formulário
+  const [data, setData] = useState(new Date());
   const toast = useToast();
 
-  // 2. useEffect para definir a data padrão quando o modal abre
   useEffect(() => {
-    if (selectedDate) {
-      setData(selectedDate);
-    }
-  }, [selectedDate]);
-
-  useEffect(() => {
-    if (usuario) {
+    if (usuario && usuario.familiaId) {
       const q = query(
         collection(db, "categorias"),
-        where("userId", "==", usuario.uid),
-        orderBy("nome")
+        where("familiaId", "==", usuario.familiaId)
       );
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const cats = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
+        cats.sort((a, b) => a.nome.localeCompare(b.nome));
         setUserCategories(cats);
       });
       return () => unsubscribe();
@@ -68,7 +58,6 @@ function ExpenseForm({ usuario, onSuccess, selectedDate }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (descricao === "" || valor === "" || categoria === "") {
-      alert("Por favor, preencha todos os campos, incluindo a categoria.");
       return;
     }
     try {
@@ -78,9 +67,10 @@ function ExpenseForm({ usuario, onSuccess, selectedDate }) {
         categoria,
         dividido,
         pago,
-        metodoPagamento: metodoPagamento,
-        data: data, // 3. Usa a data do estado, em vez de serverTimestamp()
-        userId: usuario.uid,
+        metodoPagamento,
+        data,
+        familiaId: usuario.familiaId,
+        criadoPor: usuario.uid,
       });
       toast({
         title: "Gasto adicionado!",
@@ -105,7 +95,6 @@ function ExpenseForm({ usuario, onSuccess, selectedDate }) {
 
   return (
     <VStack as="form" onSubmit={handleSubmit} spacing={4} w="full">
-      {/* 4. Novo campo de Data no topo do formulário */}
       <FormControl isRequired>
         <FormLabel>Data do Gasto</FormLabel>
         <DatePicker
@@ -188,5 +177,4 @@ function ExpenseForm({ usuario, onSuccess, selectedDate }) {
     </VStack>
   );
 }
-
 export default ExpenseForm;

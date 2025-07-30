@@ -1,14 +1,7 @@
-// src/pages/Dashboard.js (Versão de Depuração Corrigida)
 import React, { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebase";
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  orderBy,
-} from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { Link as RouterLink } from "react-router-dom";
 import ExpenseList from "../components/ExpenseList";
 import IncomeList from "../components/IncomeList";
@@ -37,7 +30,7 @@ import {
   Select,
   InputGroup,
   InputRightElement,
-} from "@chakra-ui/react"; // 'Divider' foi removido
+} from "@chakra-ui/react";
 import {
   SettingsIcon,
   ArrowLeftIcon,
@@ -51,9 +44,8 @@ import DatePicker, { registerLocale } from "react-datepicker";
 import { ptBR } from "date-fns/locale/pt-BR";
 registerLocale("pt-BR", ptBR);
 
-// Importação que faltava
-
 function Dashboard({ usuario }) {
+  // 'usuario' aqui é o nosso 'perfilUsuario' completo
   const [categoryColorMap, setCategoryColorMap] = useState({});
   const [gastosDate, setGastosDate] = useState(new Date());
   const [ganhosDate, setGanhosDate] = useState(new Date());
@@ -72,7 +64,6 @@ function Dashboard({ usuario }) {
     onOpen: onIncomeOpen,
     onClose: onIncomeClose,
   } = useDisclosure();
-  // Definição do controlador do UpdateModal que faltava
   const {
     isOpen: isUpdateOpen,
     onOpen: onUpdateOpen,
@@ -87,31 +78,21 @@ function Dashboard({ usuario }) {
   }, [onUpdateOpen]);
 
   useEffect(() => {
-    if (usuario) {
-      console.log("A tentar buscar categorias para o utilizador:", usuario.uid);
+    if (usuario && usuario.familiaId) {
       const q = query(
         collection(db, "categorias"),
-        where("userId", "==", usuario.uid),
-        orderBy("nome")
+        where("familiaId", "==", usuario.familiaId)
       );
-
-      const unsubscribe = onSnapshot(
-        q,
-        (querySnapshot) => {
-          console.log(`Encontradas ${querySnapshot.size} categorias.`);
-
-          const colorMap = {};
-          querySnapshot.forEach((doc) => {
-            colorMap[doc.data().nome] = doc.data().cor;
-          });
-
-          console.log("Mapa de cores criado:", colorMap);
-          setCategoryColorMap(colorMap);
-        },
-        (error) => {
-          console.error("Erro ao buscar categorias:", error);
-        }
-      );
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const colorMap = {};
+        const sortedCategories = querySnapshot.docs.sort((a, b) =>
+          a.data().nome.localeCompare(b.data().nome)
+        );
+        sortedCategories.forEach((doc) => {
+          colorMap[doc.data().nome] = doc.data().cor;
+        });
+        setCategoryColorMap(colorMap);
+      });
       return () => unsubscribe();
     }
   }, [usuario]);
@@ -233,13 +214,11 @@ function Dashboard({ usuario }) {
                   value={filtroCategoria}
                   onChange={(e) => setFiltroCategoria(e.target.value)}
                 >
-                  {Object.keys(categoryColorMap)
-                    .sort()
-                    .map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
+                  {Object.keys(categoryColorMap).map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
                 </Select>
                 <InputGroup>
                   <Input
@@ -265,6 +244,7 @@ function Dashboard({ usuario }) {
                 currentDate={gastosDate}
                 filtroCategoria={filtroCategoria}
                 filtroTexto={filtroTexto}
+                categoryColorMap={categoryColorMap}
               />
             </TabPanel>
             <TabPanel>
@@ -318,7 +298,6 @@ function Dashboard({ usuario }) {
           onClick={handleFabClick}
         />
       )}
-
       <AddExpenseModal
         isOpen={isExpenseOpen}
         onClose={onExpenseClose}
@@ -329,7 +308,6 @@ function Dashboard({ usuario }) {
         onClose={onIncomeClose}
         usuario={usuario}
       />
-
       <UpdateModal isOpen={isUpdateOpen} onClose={onUpdateClose} />
     </Box>
   );

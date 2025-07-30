@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { db } from "../firebase";
 import {
   collection,
   query,
   where,
-  onSnapshot,
+  getDocs,
+  getDoc,
   Timestamp,
   doc,
-  getDoc,
   updateDoc,
 } from "firebase/firestore";
 import {
@@ -79,8 +79,11 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const hoverBg = useColorModeValue("gray.50", "gray.700");
 
-  useEffect(() => {
-    if (!usuario) return;
+  const fetchMonthlyData = useCallback(async () => {
+    if (!usuario || !usuario.familiaId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
 
     const startOfMonth = new Date(
@@ -99,40 +102,38 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
     const startTimestamp = Timestamp.fromDate(startOfMonth);
     const endTimestamp = Timestamp.fromDate(endOfMonth);
 
-    const fetchBudgetData = async () => {
-      const budgetDocId = `${usuario.uid}_${currentDate.getFullYear()}-${String(
+    try {
+      const budgetDocId = `${
+        usuario.familiaId
+      }_${currentDate.getFullYear()}-${String(
         currentDate.getMonth() + 1
       ).padStart(2, "0")}`;
       const budgetDocRef = doc(db, "orcamentos", budgetDocId);
-      const docSnap = await getDoc(budgetDocRef);
-      if (docSnap.exists()) {
-        return docSnap.data();
-      }
-      return { valorTotal: 0, orcamentosPorCategoria: {} };
-    };
+      const budgetSnap = await getDoc(budgetDocRef);
+      const budgetData = budgetSnap.exists()
+        ? budgetSnap.data()
+        : { valorTotal: 0, orcamentosPorCategoria: {} };
 
-    const ganhosQuery = query(
-      collection(db, "ganhos"),
-      where("userId", "==", usuario.uid),
-      where("data", ">=", startTimestamp),
-      where("data", "<=", endTimestamp)
-    );
-    const unsubscribeGanhos = onSnapshot(ganhosQuery, (ganhosSnap) => {
+      const ganhosQuery = query(
+        collection(db, "ganhos"),
+        where("familiaId", "==", usuario.familiaId),
+        where("data", ">=", startTimestamp),
+        where("data", "<=", endTimestamp)
+      );
+      const ganhosSnap = await getDocs(ganhosQuery);
       const totalGanhos = ganhosSnap.docs.reduce(
         (acc, doc) => acc + doc.data().valor,
         0
       );
-      setSummaryData((prevData) => ({ ...prevData, totalGanhos }));
-    });
 
-    const gastosQuery = query(
-      collection(db, "gastos"),
-      where("userId", "==", usuario.uid),
-      where("data", ">=", startTimestamp),
-      where("data", "<=", endTimestamp)
-    );
-    const unsubscribeGastos = onSnapshot(gastosQuery, async (gastosSnap) => {
-      const budgetData = await fetchBudgetData();
+      const gastosQuery = query(
+        collection(db, "gastos"),
+        where("familiaId", "==", usuario.familiaId),
+        where("data", ">=", startTimestamp),
+        where("data", "<=", endTimestamp)
+      );
+      const gastosSnap = await getDocs(gastosQuery);
+
       let totalGastos = 0,
         totalPago = 0,
         totalDividido = 0,
@@ -140,7 +141,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
         totalAVista = 0;
       const gastosPorCategoria = {},
         gastosPendentes = [];
-
       gastosSnap.forEach((doc) => {
         const gasto = doc.data();
         totalGastos += gasto.valor;
@@ -161,8 +161,8 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
           (gastosPorCategoria[gasto.categoria] || 0) + gasto.valor;
       });
 
-      setSummaryData((prevData) => ({
-        ...prevData,
+      setSummaryData({
+        totalGanhos,
         totalGastos,
         totalPago,
         totalDividido,
@@ -175,20 +175,23 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
         ),
         orcamentoTotal: budgetData.valorTotal,
         orcamentosPorCategoria: budgetData.orcamentosPorCategoria || {},
-      }));
+      });
+    } catch (error) {
+      console.error("Erro ao buscar dados do resumo:", error);
+    } finally {
       setLoading(false);
-    });
-
-    return () => {
-      unsubscribeGanhos();
-      unsubscribeGastos();
-    };
+    }
   }, [usuario, currentDate]);
+
+  useEffect(() => {
+    fetchMonthlyData();
+  }, [fetchMonthlyData]);
 
   const handleMarkAsPaid = async (gastoId) => {
     const gastoDocRef = doc(db, "gastos", gastoId);
     try {
       await updateDoc(gastoDocRef, { pago: true });
+      fetchMonthlyData();
     } catch (error) {
       console.error("Erro ao marcar como pago: ", error);
     }
@@ -212,25 +215,24 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
   const borderColorsKeys = categoryLabels.map((cat) => {
     const color = categoryColorMap[cat] || "gray.500";
     const baseColor = color.split(".")[0];
-    return `${baseColor}.800`;
+    return `${baseColor}.500`;
   });
 
   const resolvedBackgroundColors = useToken("colors", backgroundColorsKeys);
   const resolvedBorderColors = useToken("colors", borderColorsKeys);
 
-  // Resolve budget colors for categories
   const budgetCategoryLabels = Object.keys(summaryData.orcamentosPorCategoria);
-  const budgetColorsKeys = budgetCategoryLabels.map(
-    (cat) => categoryColorMap[cat] || "gray.300"
+  const budgetBackgroundColorsKeys = budgetCategoryLabels.map(
+    (cat) => categoryColorMap[cat] || "gray.500"
   );
-  const resolvedBudgetColors = useToken("colors", budgetColorsKeys);
-  const resolvedBudgetColorMap = budgetCategoryLabels.reduce(
-    (acc, cat, idx) => {
-      acc[cat] = resolvedBudgetColors[idx];
-      return acc;
-    },
-    {}
+  const resolvedBudgetBackgroundColors = useToken(
+    "colors",
+    budgetBackgroundColorsKeys
   );
+  const resolvedBudgetColorMap = {};
+  budgetCategoryLabels.forEach((label, index) => {
+    resolvedBudgetColorMap[label] = resolvedBudgetBackgroundColors[index];
+  });
 
   const chartData = {
     labels: categoryLabels,
@@ -382,20 +384,22 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
       >
         <Stat p={4} borderWidth="1px" borderRadius="lg">
           <StatLabel>Total Dividido</StatLabel>
-          <StatNumber>R$ {summaryData.totalDividido.toFixed(2)}</StatNumber>
+          <StatNumber color="green.600">
+            R$ {summaryData.totalDividido.toFixed(2)}
+          </StatNumber>
           <StatHelpText>
             R$ {(summaryData.totalDividido / 2).toFixed(2)} para cada
           </StatHelpText>
         </Stat>
         <Stat p={4} borderWidth="1px" borderRadius="lg">
           <StatLabel>Gastos no Cartão</StatLabel>
-          <StatNumber color="purple.500">
+          <StatNumber color="blue.500">
             R$ {summaryData.totalCartao.toFixed(2)}
           </StatNumber>
         </Stat>
         <Stat p={4} borderWidth="1px" borderRadius="lg">
           <StatLabel>Gastos à Vista</StatLabel>
-          <StatNumber color="teal.500">
+          <StatNumber color="gray.600">
             R$ {summaryData.totalAVista.toFixed(2)}
           </StatNumber>
         </Stat>

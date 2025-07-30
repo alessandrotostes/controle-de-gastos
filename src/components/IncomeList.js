@@ -16,7 +16,6 @@ import {
   Text,
   VStack,
   HStack,
-  Spinner,
   Heading,
   IconButton,
   useDisclosure,
@@ -75,7 +74,7 @@ function IncomeList({ usuario, currentDate }) {
   const toast = useToast();
 
   useEffect(() => {
-    if (!usuario || !currentDate) return;
+    if (!usuario || !currentDate || !usuario.familiaId) return;
     setLoading(true);
     const startOfMonth = new Date(
       currentDate.getFullYear(),
@@ -94,7 +93,7 @@ function IncomeList({ usuario, currentDate }) {
     const endTimestamp = Timestamp.fromDate(endOfMonth);
     const q = query(
       collection(db, "ganhos"),
-      where("userId", "==", usuario.uid),
+      where("familiaId", "==", usuario.familiaId),
       where("data", ">=", startTimestamp),
       where("data", "<=", endTimestamp),
       orderBy("data", "desc")

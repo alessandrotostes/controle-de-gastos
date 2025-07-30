@@ -6,7 +6,6 @@ import {
   query,
   where,
   onSnapshot,
-  orderBy,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import {
@@ -39,7 +38,6 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
   const [valor, setValor] = useState("");
   const [categoria, setCategoria] = useState("");
   const [dividido, setDividido] = useState(false);
-  // 1. ALTERAÇÃO: O estado 'pago' agora começa como 'false'.
   const [pago, setPago] = useState(false);
   const [metodoPagamento, setMetodoPagamento] = useState("À Vista");
   const [data, setData] = useState(new Date());
@@ -47,17 +45,17 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
   const toast = useToast();
 
   useEffect(() => {
-    if (usuario) {
+    if (usuario && usuario.familiaId) {
       const q = query(
         collection(db, "categorias"),
-        where("userId", "==", usuario.uid),
-        orderBy("nome")
+        where("familiaId", "==", usuario.familiaId)
       );
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const cats = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
+        cats.sort((a, b) => a.nome.localeCompare(b.nome));
         setUserCategories(cats);
       });
       return () => unsubscribe();
@@ -70,7 +68,6 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
       setValor(gasto.valor);
       setCategoria(gasto.categoria);
       setDividido(gasto.dividido || false);
-      // 2. ALTERAÇÃO: O padrão para gastos antigos agora é 'false'.
       setPago(gasto.pago === undefined ? false : gasto.pago);
       setMetodoPagamento(gasto.metodoPagamento || "À Vista");
       if (gasto.data && gasto.data.seconds) {
@@ -158,7 +155,7 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
                   <option key={cat.id} value={cat.nome}>
                     {cat.nome}
                   </option>
-                ))}
+                ))}{" "}
               </Select>
             </FormControl>
             <FormControl>

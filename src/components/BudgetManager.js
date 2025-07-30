@@ -1,4 +1,3 @@
-// src/components/BudgetManager.js
 import React, { useState, useEffect, useCallback } from "react";
 import { db } from "../firebase";
 import {
@@ -35,11 +34,16 @@ function BudgetManager({ usuario }) {
   const [userCategories, setUserCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
-  const budgetDocId = `${usuario.uid}_${selectedDate.getFullYear()}-${String(
-    selectedDate.getMonth() + 1
-  ).padStart(2, "0")}`;
+
+  // ID do documento agora é baseado no familiaId
+  const budgetDocId = usuario
+    ? `${usuario.familiaId}_${selectedDate.getFullYear()}-${String(
+        selectedDate.getMonth() + 1
+      ).padStart(2, "0")}`
+    : null;
 
   const fetchBudget = useCallback(async () => {
+    if (!budgetDocId) return;
     setLoading(true);
     const budgetDocRef = doc(db, "orcamentos", budgetDocId);
     const docSnap = await getDoc(budgetDocRef);
@@ -55,32 +59,36 @@ function BudgetManager({ usuario }) {
   }, [budgetDocId]);
 
   useEffect(() => {
-    const q = query(
-      collection(db, "categorias"),
-      where("userId", "==", usuario.uid)
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const cats = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setUserCategories(cats);
-    });
-    return unsubscribe;
-  }, [usuario.uid]);
+    if (usuario && usuario.familiaId) {
+      const q = query(
+        collection(db, "categorias"),
+        where("familiaId", "==", usuario.familiaId)
+      );
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const cats = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        cats.sort((a, b) => a.nome.localeCompare(b.nome));
+        setUserCategories(cats);
+      });
+      return unsubscribe;
+    }
+  }, [usuario]);
 
   useEffect(() => {
     fetchBudget();
   }, [fetchBudget]);
 
   const handleSaveBudget = async () => {
+    if (!budgetDocId) return;
     let finalTotalBudget = Number(totalBudget) || 0;
-
-    // Lógica para somar as categorias se o total for 0
     if (finalTotalBudget === 0 && Object.keys(categoryBudgets).length > 0) {
       finalTotalBudget = Object.values(categoryBudgets).reduce(
         (sum, value) => sum + Number(value),
         0
       );
     }
-
     const cleanCategoryBudgets = Object.fromEntries(
       Object.entries(categoryBudgets).map(([key, value]) => [
         key,
@@ -89,7 +97,7 @@ function BudgetManager({ usuario }) {
     );
     const budgetDocRef = doc(db, "orcamentos", budgetDocId);
     const budgetData = {
-      userId: usuario.uid,
+      familiaId: usuario.familiaId,
       mesAno: `${selectedDate.getFullYear()}-${String(
         selectedDate.getMonth() + 1
       ).padStart(2, "0")}`,
@@ -103,7 +111,7 @@ function BudgetManager({ usuario }) {
       duration: 3000,
       isClosable: true,
     });
-    fetchBudget(); // Recarrega os dados para mostrar o total calculado
+    fetchBudget();
   };
 
   const handleCategoryBudgetChange = (categoryName, value) => {
@@ -131,9 +139,7 @@ function BudgetManager({ usuario }) {
       </FormControl>
       <VStack spacing={6} align="stretch">
         <FormControl>
-          <FormLabel>
-            Orçamento Total do Mês (Opcional se preencher por categoria)
-          </FormLabel>
+          <FormLabel>Orçamento Total do Mês (Opcional)</FormLabel>
           <InputGroup>
             <InputLeftAddon>R$</InputLeftAddon>
             <Input
@@ -182,5 +188,4 @@ function BudgetManager({ usuario }) {
     </Box>
   );
 }
-
 export default BudgetManager;

@@ -17,7 +17,6 @@ import {
   VStack,
   HStack,
   Tag,
-  Spinner,
   Heading,
   IconButton,
   useDisclosure,
@@ -46,11 +45,16 @@ const formatDate = (timestamp) => {
   }).format(date);
 };
 
-function ExpenseList({ usuario, currentDate, filtroCategoria, filtroTexto }) {
+function ExpenseList({
+  usuario,
+  currentDate,
+  filtroCategoria,
+  filtroTexto,
+  categoryColorMap,
+}) {
   const [gastos, setGastos] = useState([]);
   const [gastosFiltrados, setGastosFiltrados] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [categoryColorMap, setCategoryColorMap] = useState({});
   const {
     isOpen: isEditOpen,
     onOpen: onEditOpen,
@@ -66,7 +70,7 @@ function ExpenseList({ usuario, currentDate, filtroCategoria, filtroTexto }) {
   const cancelRef = useRef();
 
   useEffect(() => {
-    if (!usuario || !currentDate) return;
+    if (!usuario || !currentDate || !usuario.familiaId) return;
     setLoading(true);
     const startOfMonth = new Date(
       currentDate.getFullYear(),
@@ -85,7 +89,7 @@ function ExpenseList({ usuario, currentDate, filtroCategoria, filtroTexto }) {
     const endTimestamp = Timestamp.fromDate(endOfMonth);
     const q = query(
       collection(db, "gastos"),
-      where("userId", "==", usuario.uid),
+      where("familiaId", "==", usuario.familiaId),
       where("data", ">=", startTimestamp),
       where("data", "<=", endTimestamp),
       orderBy("data", "desc")
@@ -131,23 +135,6 @@ function ExpenseList({ usuario, currentDate, filtroCategoria, filtroTexto }) {
     setGastosFiltrados(dadosFiltrados);
   }, [gastos, filtroCategoria, filtroTexto]);
 
-  useEffect(() => {
-    if (usuario) {
-      const q = query(
-        collection(db, "categorias"),
-        where("userId", "==", usuario.uid)
-      );
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const colorMap = {};
-        querySnapshot.forEach((doc) => {
-          colorMap[doc.data().nome] = doc.data().cor;
-        });
-        setCategoryColorMap(colorMap);
-      });
-      return () => unsubscribe();
-    }
-  }, [usuario]);
-
   const handleDelete = async () => {
     await deleteDoc(doc(db, "gastos", idParaExcluir));
     onDeleteClose();
@@ -187,10 +174,8 @@ function ExpenseList({ usuario, currentDate, filtroCategoria, filtroTexto }) {
       ) : (
         <VStack spacing={4} align="stretch">
           {gastosFiltrados.map((gasto) => {
-            // AQUI ESTÁ A LÓGICA DE CORREÇÃO
             const categoryColor = categoryColorMap[gasto.categoria] || "gray";
             const baseColorScheme = categoryColor.split(".")[0];
-
             return (
               <Flex
                 key={gasto.id}
@@ -228,7 +213,6 @@ function ExpenseList({ usuario, currentDate, filtroCategoria, filtroTexto }) {
                         </Text>
                       )}
                       <HStack>
-                        {/* A Tag agora usa a cor base extraída */}
                         <Tag colorScheme={baseColorScheme} size="sm">
                           {gasto.categoria}
                         </Tag>
@@ -252,7 +236,7 @@ function ExpenseList({ usuario, currentDate, filtroCategoria, filtroTexto }) {
                         fontSize="xl"
                         color={
                           gasto.metodoPagamento === "Cartão de Crédito"
-                            ? "purple.500"
+                            ? "blue.400"
                             : "green.400"
                         }
                       >
