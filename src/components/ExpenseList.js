@@ -87,6 +87,8 @@ function ExpenseList({
     );
     const startTimestamp = Timestamp.fromDate(startOfMonth);
     const endTimestamp = Timestamp.fromDate(endOfMonth);
+
+    // ALTERAÇÃO: A consulta agora usa familiaId
     const q = query(
       collection(db, "gastos"),
       where("familiaId", "==", usuario.familiaId),
@@ -94,6 +96,7 @@ function ExpenseList({
       where("data", "<=", endTimestamp),
       orderBy("data", "desc")
     );
+
     const unsubscribe = onSnapshot(
       q,
       (querySnapshot) => {
@@ -109,6 +112,7 @@ function ExpenseList({
         setLoading(false);
       }
     );
+
     return () => unsubscribe();
   }, [usuario, currentDate]);
 

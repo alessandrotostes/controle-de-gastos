@@ -43,6 +43,7 @@ import {
   InputLeftAddon,
 } from "@chakra-ui/react";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
+import DatePicker from "react-datepicker";
 
 const formatDate = (timestamp) => {
   if (!timestamp || !timestamp.seconds) return "";
@@ -70,6 +71,7 @@ function IncomeList({ usuario, currentDate }) {
   const [itemSelecionado, setItemSelecionado] = useState(null);
   const [descricaoEdit, setDescricaoEdit] = useState("");
   const [valorEdit, setValorEdit] = useState("");
+  const [dataEdit, setDataEdit] = useState(new Date());
   const cancelRef = useRef();
   const toast = useToast();
 
@@ -120,8 +122,12 @@ function IncomeList({ usuario, currentDate }) {
     setItemSelecionado(item);
     setDescricaoEdit(item.descricao);
     setValorEdit(item.valor);
+    if (item.data && item.data.seconds) {
+      setDataEdit(new Date(item.data.seconds * 1000));
+    }
     onEditOpen();
   };
+
   const handleDeleteClick = (item) => {
     setItemSelecionado(item);
     onDeleteOpen();
@@ -132,6 +138,7 @@ function IncomeList({ usuario, currentDate }) {
     await updateDoc(itemDocRef, {
       descricao: descricaoEdit,
       valor: Number(valorEdit),
+      data: dataEdit,
     });
     onEditClose();
     toast({
@@ -156,12 +163,6 @@ function IncomeList({ usuario, currentDate }) {
   if (loading) {
     return (
       <VStack spacing={4} align="stretch">
-        <Box p={4} borderWidth="1px" borderRadius="lg">
-          <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
-        </Box>
-        <Box p={4} borderWidth="1px" borderRadius="lg">
-          <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
-        </Box>
         <Box p={4} borderWidth="1px" borderRadius="lg">
           <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
         </Box>
@@ -228,27 +229,39 @@ function IncomeList({ usuario, currentDate }) {
           <ModalHeader>Editar Ganho</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <FormControl>
-              <FormLabel>Descrição</FormLabel>
-              <Input
-                value={descricaoEdit}
-                onChange={(e) => setDescricaoEdit(e.target.value)}
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Valor</FormLabel>
-              <InputGroup>
-                <InputLeftAddon>R$</InputLeftAddon>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  value={valorEdit}
-                  onChange={(e) =>
-                    setValorEdit(e.target.value.replace(",", "."))
-                  }
+            <VStack spacing={4}>
+              <FormControl>
+                <FormLabel>Data do Ganho</FormLabel>
+                <DatePicker
+                  selected={dataEdit}
+                  onChange={(date) => setDataEdit(date)}
+                  dateFormat="dd/MM/yyyy"
+                  locale="pt-BR"
+                  customInput={<Input />}
                 />
-              </InputGroup>
-            </FormControl>
+              </FormControl>
+              <FormControl>
+                <FormLabel>Descrição</FormLabel>
+                <Input
+                  value={descricaoEdit}
+                  onChange={(e) => setDescricaoEdit(e.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Valor</FormLabel>
+                <InputGroup>
+                  <InputLeftAddon>R$</InputLeftAddon>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={valorEdit}
+                    onChange={(e) =>
+                      setValorEdit(e.target.value.replace(",", "."))
+                    }
+                  />
+                </InputGroup>
+              </FormControl>
+            </VStack>
           </ModalBody>
           <ModalFooter>
             <Button onClick={onEditClose} mr={3}>

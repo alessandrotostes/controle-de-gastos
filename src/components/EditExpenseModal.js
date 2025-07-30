@@ -6,6 +6,7 @@ import {
   query,
   where,
   onSnapshot,
+  orderBy,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import {
@@ -45,17 +46,18 @@ function EditExpenseModal({ isOpen, onClose, gasto, usuario }) {
   const toast = useToast();
 
   useEffect(() => {
+    // ALTERAÇÃO: Busca categorias pelo familiaId
     if (usuario && usuario.familiaId) {
       const q = query(
         collection(db, "categorias"),
-        where("familiaId", "==", usuario.familiaId)
+        where("familiaId", "==", usuario.familiaId),
+        orderBy("nome")
       );
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const cats = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-        cats.sort((a, b) => a.nome.localeCompare(b.nome));
         setUserCategories(cats);
       });
       return () => unsubscribe();

@@ -35,7 +35,6 @@ function BudgetManager({ usuario }) {
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
-  // ID do documento agora é baseado no familiaId
   const budgetDocId = usuario
     ? `${usuario.familiaId}_${selectedDate.getFullYear()}-${String(
         selectedDate.getMonth() + 1

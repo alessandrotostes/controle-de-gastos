@@ -1,4 +1,3 @@
-// src/pages/Configuracoes.js
 import React from "react";
 import {
   Box,
@@ -8,20 +7,19 @@ import {
   Spacer,
   Button,
   Divider,
-  useColorMode, // 1. Importe o useColorMode
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import CategoryManager from "../components/CategoryManager";
 import BudgetManager from "../components/BudgetManager";
+import FamilyManager from "../components/FamilyManager";
 
 function Configuracoes({ usuario }) {
-  // 2. Obtenha o modo de cor atual
-  const { colorMode } = useColorMode();
+  const headerBg = useColorModeValue("gray.100", "gray.700");
 
   return (
     <Box>
-      {/* 3. Aplique a cor de fundo condicional */}
-      <Box bg={colorMode === "light" ? "gray.100" : "gray.700"} p={4}>
+      <Box bg={headerBg} p={4}>
         <Flex as="header" align="center">
           <Heading as="h1" size="lg">
             Configurações
@@ -33,10 +31,10 @@ function Configuracoes({ usuario }) {
         </Flex>
       </Box>
       <Container maxW="container.md" mt={8}>
-        <CategoryManager usuario={usuario} />
-
+        <FamilyManager usuario={usuario} />
         <Divider my={10} />
-
+        <CategoryManager usuario={usuario} />
+        <Divider my={10} />
         <BudgetManager usuario={usuario} />
       </Container>
     </Box>

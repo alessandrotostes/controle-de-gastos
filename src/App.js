@@ -2,7 +2,17 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "./firebase";
-import { doc, getDoc, setDoc, collection } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+  arrayUnion,
+} from "firebase/firestore";
 import { ChakraProvider, Center, Spinner } from "@chakra-ui/react";
 import { theme } from "./theme";
 
@@ -24,28 +34,63 @@ function App() {
         if (userAuth) {
           const userDocRef = doc(db, "usuarios", userAuth.uid);
           const docSnap = await getDoc(userDocRef);
+
           if (docSnap.exists()) {
+            // Utilizador já tem perfil, apenas carrega os dados
             setPerfilUsuario({ ...userAuth, ...docSnap.data() });
           } else {
-            const familiaDocRef = doc(collection(db, "familias"));
-            await setDoc(familiaDocRef, {
-              nome: `Família de ${userAuth.email}`,
-              membros: [userAuth.uid],
-              ownerId: userAuth.uid,
-            });
-            const novoPerfil = {
-              email: userAuth.email,
-              familiaId: familiaDocRef.id,
-            };
-            await setDoc(userDocRef, novoPerfil);
-            setPerfilUsuario({ ...userAuth, ...novoPerfil });
+            // É o primeiro login, verifica se existe um convite
+            const conviteQuery = query(
+              collection(db, "convites"),
+              where("emailConvidado", "==", userAuth.email),
+              where("status", "==", "pendente")
+            );
+            const conviteSnap = await getDocs(conviteQuery);
+
+            if (!conviteSnap.empty) {
+              // ENCONTROU UM CONVITE: Adiciona o utilizador à família existente
+              const convite = conviteSnap.docs[0].data();
+              const conviteId = conviteSnap.docs[0].id;
+
+              const novoPerfil = {
+                email: userAuth.email,
+                familiaId: convite.familiaId,
+              };
+              await setDoc(userDocRef, novoPerfil);
+
+              const familiaRef = doc(db, "familias", convite.familiaId);
+              await updateDoc(familiaRef, {
+                membros: arrayUnion(userAuth.uid),
+              });
+
+              const conviteRef = doc(db, "convites", conviteId);
+              await updateDoc(conviteRef, { status: "aceite" });
+
+              setPerfilUsuario({ ...userAuth, ...novoPerfil });
+            } else {
+              // NÃO ENCONTROU CONVITE: Cria uma nova família para o novo utilizador
+              const familiaDocRef = doc(collection(db, "familias"));
+              await setDoc(familiaDocRef, {
+                nome: `Família de ${userAuth.email}`,
+                membros: [userAuth.uid],
+                ownerId: userAuth.uid,
+              });
+
+              const novoPerfil = {
+                email: userAuth.email,
+                familiaId: familiaDocRef.id,
+              };
+              await setDoc(userDocRef, novoPerfil);
+
+              setPerfilUsuario({ ...userAuth, ...novoPerfil });
+            }
           }
         } else {
+          // Utilizador deslogado
           setPerfilUsuario(null);
         }
       } catch (error) {
         console.error("ERRO CRÍTICO no useEffect do App.js:", error);
-        setPerfilUsuario(null);
       } finally {
         setLoading(false);
       }
@@ -53,7 +98,6 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // O 'if (loading)' aqui continua importante para o carregamento inicial da aplicação
   if (loading) {
     return (
       <ChakraProvider theme={theme}>
@@ -84,17 +128,14 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-          {/* AQUI ESTÁ A MUDANÇA: Passamos a propriedade 'loading' para o RedirectIfAuth */}
           <Route
             path="/login"
             element={
-              <RedirectIfAuth usuario={perfilUsuario} loading={loading}>
+              <RedirectIfAuth usuario={perfilUsuario}>
                 <Login />
               </RedirectIfAuth>
             }
           />
-
           <Route path="/cadastro" element={<Navigate to="/login" />} />
           <Route path="/action" element={<ActionPage />} />
           <Route path="*" element={<NotFound />} />

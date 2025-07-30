@@ -6,6 +6,7 @@ import {
   query,
   where,
   onSnapshot,
+  orderBy,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import {
@@ -38,17 +39,18 @@ function ExpenseForm({ usuario, onSuccess }) {
   const toast = useToast();
 
   useEffect(() => {
+    // ALTERAÇÃO: Busca categorias pelo familiaId
     if (usuario && usuario.familiaId) {
       const q = query(
         collection(db, "categorias"),
-        where("familiaId", "==", usuario.familiaId)
+        where("familiaId", "==", usuario.familiaId),
+        orderBy("nome")
       );
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const cats = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-        cats.sort((a, b) => a.nome.localeCompare(b.nome));
         setUserCategories(cats);
       });
       return () => unsubscribe();
@@ -69,7 +71,7 @@ function ExpenseForm({ usuario, onSuccess }) {
         pago,
         metodoPagamento,
         data,
-        familiaId: usuario.familiaId,
+        familiaId: usuario.familiaId, // ALTERAÇÃO: Salva o familiaId
         criadoPor: usuario.uid,
       });
       toast({
@@ -137,7 +139,7 @@ function ExpenseForm({ usuario, onSuccess }) {
             <option key={cat.id} value={cat.nome}>
               {cat.nome}
             </option>
-          ))}
+          ))}{" "}
         </Select>
       </FormControl>
       <FormControl>
