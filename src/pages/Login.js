@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
@@ -24,21 +24,29 @@ function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
 
-  const pageBg = useColorModeValue("gray.50", "gray.800");
+  const pageBg = useColorModeValue(
+    "linear-gradient(to bottom right, #f7fafc, #edf2f7)",
+    "linear-gradient(to bottom right, #2d3748, #1a202c)"
+  );
   const formBg = useColorModeValue("white", "gray.700");
+  const formBorderColor = useColorModeValue("gray.200", "gray.600");
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setErro("");
+    setIsLoading(true);
+
     try {
       await signInWithEmailAndPassword(auth, email, senha);
-      navigate("/");
     } catch (error) {
       setErro("E-mail ou senha inválidos.");
       console.error("Erro no login:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -60,7 +68,7 @@ function Login() {
       toast({
         title: "Email de redefinição enviado!",
         description:
-          "Verifique a sua caixa de entrada para definir uma nova palavra-passe. Confira a caixa de spam se não o encontrar.",
+          "Verifique a sua caixa de entrada para definir uma nova palavra-passe.",
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -84,15 +92,17 @@ function Login() {
       <VStack
         as="form"
         onSubmit={handleLogin}
-        spacing={4}
+        spacing={6} // Aumentei um pouco o espaçamento
         w="full"
         maxW="md"
-        p={8}
+        p={10} // Aumentei um pouco o padding
         bg={formBg}
-        borderRadius="lg"
-        boxShadow="lg"
+        borderRadius="md" // Ligeiramente menos arredondado
+        boxShadow="xl" // Uma sombra maior para um efeito mais "elevado"
+        borderWidth="1px"
+        borderColor={formBorderColor}
       >
-        <Heading as="h1" size="lg" mb={6}>
+        <Heading as="h1" size="xl" mb={8} textAlign="center">
           Entrar na sua Conta
         </Heading>
 
@@ -103,6 +113,8 @@ function Login() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="seu-email@exemplo.com"
+            isDisabled={isLoading}
+            size="lg" // Inputs um pouco maiores
           />
         </FormControl>
 
@@ -113,18 +125,26 @@ function Login() {
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             placeholder="Sua senha"
+            isDisabled={isLoading}
+            size="lg"
           />
         </FormControl>
 
         {erro && <Text color="red.500">{erro}</Text>}
 
-        <Flex w="full" justify="flex-end">
+        <Flex w="full" justify="flex-end" mt={2}>
           <Link color="blue.500" onClick={handlePasswordReset} fontSize="sm">
             Esqueci-me da palavra-passe
           </Link>
         </Flex>
 
-        <Button type="submit" colorScheme="blue" width="full">
+        <Button
+          type="submit"
+          colorScheme="blue"
+          width="full"
+          isLoading={isLoading}
+          size="lg" // Botão maior
+        >
           Entrar
         </Button>
       </VStack>

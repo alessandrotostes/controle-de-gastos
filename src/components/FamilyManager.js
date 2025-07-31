@@ -1,4 +1,3 @@
-// src/components/FamilyManager.js
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
 import {
@@ -21,7 +20,6 @@ import {
   Text,
   Heading,
   useToast,
-  Tag,
   InputGroup,
   InputRightElement,
 } from "@chakra-ui/react";
@@ -32,7 +30,6 @@ function FamilyManager({ usuario }) {
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
 
-  // Busca os membros da família
   useEffect(() => {
     if (!usuario || !usuario.familiaId) return;
 
@@ -53,7 +50,6 @@ function FamilyManager({ usuario }) {
     setIsLoading(true);
 
     try {
-      // Verifica se o convite já existe
       const q = query(
         collection(db, "convites"),
         where("emailConvidado", "==", inviteEmail)
@@ -69,7 +65,6 @@ function FamilyManager({ usuario }) {
         return;
       }
 
-      // Cria o convite
       await addDoc(collection(db, "convites"), {
         familiaId: usuario.familiaId,
         emailConvidado: inviteEmail,
@@ -80,8 +75,7 @@ function FamilyManager({ usuario }) {
 
       toast({
         title: `Convite enviado para ${inviteEmail}!`,
-        description:
-          "Contate o Admnistrador da aplicação para liberar o convite.",
+        description: "Peça ao utilizador para fazer login.",
         status: "success",
         duration: 5000,
       });
@@ -106,11 +100,23 @@ function FamilyManager({ usuario }) {
         <Heading as="h3" size="md" mb={3}>
           Membros Atuais
         </Heading>
-        <HStack spacing={4}>
+        {/* AQUI ESTÁ A CORREÇÃO: Adicionamos a propriedade 'wrap' */}
+        <HStack spacing={4} wrap="wrap">
           {members.map((email) => (
-            <Tag key={email} size="lg">
-              {email}
-            </Tag>
+            // Adicionamos uma Box para controlar o tamanho máximo do email
+            <Box
+              key={email}
+              bg="gray.100"
+              _dark={{ bg: "gray.600" }}
+              px={3}
+              py={1}
+              borderRadius="md"
+              mb={2}
+            >
+              <Text isTruncated maxW="250px" title={email}>
+                {email}
+              </Text>
+            </Box>
           ))}
         </HStack>
       </Box>

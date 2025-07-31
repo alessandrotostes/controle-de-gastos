@@ -38,6 +38,7 @@ import {
   Input,
   useToast,
   Flex,
+  Skeleton,
   SkeletonText,
   InputGroup,
   InputLeftAddon,
@@ -163,9 +164,33 @@ function IncomeList({ usuario, currentDate }) {
   if (loading) {
     return (
       <VStack spacing={4} align="stretch">
-        <Box p={4} borderWidth="1px" borderRadius="lg">
-          <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
-        </Box>
+        {[...Array(3)].map((_, i) => (
+          <Flex
+            key={i}
+            p={4}
+            borderWidth="1px"
+            borderRadius="lg"
+            justify="space-between"
+            align="center"
+          >
+            <Box flex="1" mr={4}>
+              <SkeletonText
+                noOfLines={1}
+                spacing="3"
+                skeletonHeight="4"
+                w="70%"
+              />
+              <SkeletonText
+                noOfLines={1}
+                spacing="2"
+                skeletonHeight="2"
+                w="40%"
+                mt={2}
+              />
+            </Box>
+            <Skeleton height="30px" width="100px" />
+          </Flex>
+        ))}
       </VStack>
     );
   }

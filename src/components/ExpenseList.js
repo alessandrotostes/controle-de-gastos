@@ -28,6 +28,7 @@ import {
   AlertDialogOverlay,
   Button,
   Flex,
+  Skeleton,
   SkeletonText,
   Tooltip,
 } from "@chakra-ui/react";
@@ -87,8 +88,6 @@ function ExpenseList({
     );
     const startTimestamp = Timestamp.fromDate(startOfMonth);
     const endTimestamp = Timestamp.fromDate(endOfMonth);
-
-    // ALTERAÇÃO: A consulta agora usa familiaId
     const q = query(
       collection(db, "gastos"),
       where("familiaId", "==", usuario.familiaId),
@@ -96,7 +95,6 @@ function ExpenseList({
       where("data", "<=", endTimestamp),
       orderBy("data", "desc")
     );
-
     const unsubscribe = onSnapshot(
       q,
       (querySnapshot) => {
@@ -112,7 +110,6 @@ function ExpenseList({
         setLoading(false);
       }
     );
-
     return () => unsubscribe();
   }, [usuario, currentDate]);
 
@@ -159,9 +156,34 @@ function ExpenseList({
     return (
       <VStack spacing={4} align="stretch">
         {[...Array(4)].map((_, i) => (
-          <Box key={i} p={4} borderWidth="1px" borderRadius="lg">
-            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
-          </Box>
+          <Flex
+            key={i}
+            p={4}
+            borderWidth="1px"
+            borderRadius="lg"
+            justify="space-between"
+            align="center"
+          >
+            <Box flex="1" mr={4}>
+              <SkeletonText
+                noOfLines={1}
+                spacing="3"
+                skeletonHeight="4"
+                w="70%"
+              />
+              <SkeletonText
+                noOfLines={1}
+                spacing="2"
+                skeletonHeight="2"
+                w="40%"
+                mt={2}
+              />
+            </Box>
+            <HStack>
+              <Skeleton height="30px" width="80px" />
+              <Skeleton height="30px" width="70px" />
+            </HStack>
+          </Flex>
         ))}
       </VStack>
     );

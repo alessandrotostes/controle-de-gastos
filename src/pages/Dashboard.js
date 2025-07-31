@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebase";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { Link as RouterLink } from "react-router-dom";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  orderBy,
+} from "firebase/firestore";
 import ExpenseList from "../components/ExpenseList";
 import IncomeList from "../components/IncomeList";
 import SummaryDashboard from "../components/SummaryDashboard";
 import AddExpenseModal from "../components/AddExpenseModal";
 import AddIncomeModal from "../components/AddIncomeModal";
 import UpdateModal, { APP_VERSION } from "../components/UpdateModal";
+import { Link as RouterLink } from "react-router-dom";
 import {
   Box,
   Button,
@@ -30,6 +36,7 @@ import {
   Select,
   InputGroup,
   InputRightElement,
+  SimpleGrid,
 } from "@chakra-ui/react";
 import {
   SettingsIcon,
@@ -45,7 +52,6 @@ import { ptBR } from "date-fns/locale/pt-BR";
 registerLocale("pt-BR", ptBR);
 
 function Dashboard({ usuario }) {
-  // 'usuario' aqui é o nosso 'perfilUsuario' completo
   const [categoryColorMap, setCategoryColorMap] = useState({});
   const [gastosDate, setGastosDate] = useState(new Date());
   const [ganhosDate, setGanhosDate] = useState(new Date());
@@ -53,6 +59,7 @@ function Dashboard({ usuario }) {
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [filtroCategoria, setFiltroCategoria] = useState("");
   const [filtroTexto, setFiltroTexto] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState(""); // 1. Novo estado para o filtro de status
 
   const {
     isOpen: isExpenseOpen,
@@ -208,7 +215,8 @@ function Dashboard({ usuario }) {
                   aria-label="Próximo mês"
                 />
               </Flex>
-              <HStack spacing={4} mb={6}>
+              {/* 2. Layout dos filtros atualizado para um Grid */}
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={6}>
                 <Select
                   placeholder="Filtrar por categoria"
                   value={filtroCategoria}
@@ -219,6 +227,14 @@ function Dashboard({ usuario }) {
                       {cat}
                     </option>
                   ))}
+                </Select>
+                <Select
+                  placeholder="Filtrar por status"
+                  value={filtroStatus}
+                  onChange={(e) => setFiltroStatus(e.target.value)}
+                >
+                  <option value="pago">Pago</option>
+                  <option value="pendente">Pendente</option>
                 </Select>
                 <InputGroup>
                   <Input
@@ -238,12 +254,13 @@ function Dashboard({ usuario }) {
                     </InputRightElement>
                   )}
                 </InputGroup>
-              </HStack>
+              </SimpleGrid>
               <ExpenseList
                 usuario={usuario}
                 currentDate={gastosDate}
                 filtroCategoria={filtroCategoria}
                 filtroTexto={filtroTexto}
+                filtroStatus={filtroStatus} // 3. Passa o novo filtro para a lista
                 categoryColorMap={categoryColorMap}
               />
             </TabPanel>

@@ -1,4 +1,3 @@
-// src/components/UpdateModal.js
 import React from "react";
 import {
   Modal,
@@ -13,55 +12,102 @@ import {
   List,
   ListItem,
   ListIcon,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  Box,
 } from "@chakra-ui/react";
 import { CheckCircleIcon } from "@chakra-ui/icons";
 
 // --- CONTROLO DA VERSÃO ---
-// Este é o "número de série" da sua atualização.
-// Quando fizer uma nova alteração no futuro e quiser que o pop-up apareça de novo,
-// Ultima versão lançada: 1.1.3
-export const APP_VERSION = "1.1.3";
+// Versão 2.0.0 para refletir a grande atualização do sistema de família e outras melhorias.
+export const APP_VERSION = "2.0.1";
 
 function UpdateModal({ isOpen, onClose }) {
   const handleClose = () => {
     // Ao fechar, guardamos na "memória" do navegador que o utilizador
     // já viu o pop-up desta versão específica.
     localStorage.setItem("lastVersionSeen", APP_VERSION);
-    onClose(); // Esta função vem do Dashboard e fecha o modal visualmente.
+    onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} isCentered>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      isCentered
+      size="xl"
+      scrollBehavior="inside"
+    >
       <ModalOverlay />
       <ModalContent mx={4}>
-        <ModalHeader>Novidades na Aplicação! 🎉</ModalHeader>
+        <ModalHeader>Bem-vindo à Versão 2.0! 🎉</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <Text fontWeight="bold" mb={4}>
-            Fizemos algumas melhorias:
+          {/* Ação Importante */}
+          <Alert
+            status="warning"
+            variant="subtle"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            textAlign="center"
+            borderRadius="md"
+            mb={6}
+          >
+            <AlertIcon boxSize="40px" mr={0} />
+            <AlertTitle mt={4} mb={1} fontSize="lg">
+              Ação Necessária Importante
+            </AlertTitle>
+            <AlertDescription maxWidth="sm">
+              Para ativar o novo modo de <strong>gestão familiar</strong>, os
+              seus dados antigos foram arquivados. Por favor, vá a
+              "Configurações" e{" "}
+              <strong>recrie as suas categorias, orçamentos e poupanças</strong>
+              . Foi necessária uma grande reestruturação do código e da base de
+              dados para que a partir de agora, o aplicativo possa gerir um
+              grande fluxo de dados individuais e familiares, com maior
+              desempenho e escalabilidade.
+            </AlertDescription>
+          </Alert>
+
+          <Text fontWeight="bold" mb={3}>
+            Principais Novidades da V2.0:
           </Text>
-          {/* Aqui você pode listar o que mudou na sua última atualização */}
           <List spacing={3}>
             <ListItem>
               <ListIcon as={CheckCircleIcon} color="green.500" />
-              Removemos a cor Vermelha da aba de categorias, altere para alguma
-              das outras cores disponíveis para melhor visualização no Orçamento
-              e Gráfico.
+              <strong>Gestão de Família Colaborativa:</strong> Agora pode
+              convidar membros para partilharem e gerirem as finanças em
+              conjunto. Visite as Configurações para começar!
             </ListItem>
             <ListItem>
               <ListIcon as={CheckCircleIcon} color="green.500" />
-              Agora quando um gasto de categoria ultrapassa o valor estimado, o
-              aplicativo mostra a cor "vermelha", como forma de mostrar gasto
-              excedente.
+              <strong>Poupanças e Investimentos:</strong> Uma nova secção em
+              "Configurações" para criar e acompanhar metas financeiras, com ou
+              sem um valor alvo.
             </ListItem>
             <ListItem>
               <ListIcon as={CheckCircleIcon} color="green.500" />
-              Agora pode marcar gastos como "Pago" diretamente no Dashboard, sem
-              necessidade de abrir a página "Gastos" para fazer isso.
+              <strong>Filtros Avançados:</strong> Na aba "Gastos", agora pode
+              filtrar as suas despesas por categoria e por status ("Pago" ou
+              "Pendente").
             </ListItem>
             <ListItem>
               <ListIcon as={CheckCircleIcon} color="green.500" />
-              Correções de bugs e melhorias de desempenho.
+              <strong>Melhorias de Usabilidade:</strong>
+              <List ml={6} mt={2} spacing={1} fontSize="sm">
+                <ListItem>
+                  - Adição de gastos em meses futuros diretamente no formulário.
+                </ListItem>
+                <ListItem>
+                  - Status de "Pago/Pendente" interativo na lista de gastos.
+                </ListItem>
+                <ListItem>
+                  - Seletor de mês clicável para uma navegação mais rápida.
+                </ListItem>
+              </List>
             </ListItem>
           </List>
         </ModalBody>
