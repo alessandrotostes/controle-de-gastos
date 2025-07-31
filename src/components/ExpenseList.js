@@ -31,6 +31,11 @@ import {
   Skeleton,
   SkeletonText,
   Tooltip,
+  SimpleGrid,
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
 } from "@chakra-ui/react";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import { FaCreditCard, FaMoneyBillWave } from "react-icons/fa";
@@ -51,6 +56,7 @@ function ExpenseList({
   currentDate,
   filtroCategoria,
   filtroTexto,
+  filtroStatus,
   categoryColorMap,
 }) {
   const [gastos, setGastos] = useState([]);
@@ -113,28 +119,45 @@ function ExpenseList({
     return () => unsubscribe();
   }, [usuario, currentDate]);
 
+  // AQUI ESTÁ A LÓGICA DE FILTRAGEM CORRIGIDA
   useEffect(() => {
-    let dadosFiltrados = [...gastos];
+    let dadosProcessados = [...gastos];
+
     if (filtroCategoria) {
-      dadosFiltrados = dadosFiltrados.filter(
+      dadosProcessados = dadosProcessados.filter(
         (gasto) => gasto.categoria === filtroCategoria
       );
     }
     if (filtroTexto) {
-      dadosFiltrados = dadosFiltrados.filter((gasto) =>
+      dadosProcessados = dadosProcessados.filter((gasto) =>
         gasto.descricao.toLowerCase().includes(filtroTexto.toLowerCase())
       );
     }
-    dadosFiltrados.sort((a, b) => {
+    if (filtroStatus === "pago") {
+      dadosProcessados = dadosProcessados.filter(
+        (gasto) => gasto.pago === true
+      );
+    } else if (filtroStatus === "pendente") {
+      dadosProcessados = dadosProcessados.filter(
+        (gasto) => gasto.pago !== true
+      );
+    }
+
+    // A ordenação agora é feita sobre a lista JÁ FILTRADA
+    dadosProcessados.sort((a, b) => {
       const pagoA = !!a.pago;
       const pagoB = !!b.pago;
       if (pagoA !== pagoB) {
         return pagoA - pagoB;
       }
-      return 0;
+      // Se o status for o mesmo, mantém a ordem de data que veio do Firestore
+      const dataA = a.data.seconds;
+      const dataB = b.data.seconds;
+      return dataB - dataA;
     });
-    setGastosFiltrados(dadosFiltrados);
-  }, [gastos, filtroCategoria, filtroTexto]);
+
+    setGastosFiltrados(dadosProcessados);
+  }, [gastos, filtroCategoria, filtroTexto, filtroStatus]);
 
   const handleDelete = async () => {
     await deleteDoc(doc(db, "gastos", idParaExcluir));
@@ -154,105 +177,49 @@ function ExpenseList({
 
   if (loading) {
     return (
-      <VStack spacing={4} align="stretch">
-        {[...Array(4)].map((_, i) => (
-          <Flex
-            key={i}
-            p={4}
-            borderWidth="1px"
-            borderRadius="lg"
-            justify="space-between"
-            align="center"
-          >
-            <Box flex="1" mr={4}>
-              <SkeletonText
-                noOfLines={1}
-                spacing="3"
-                skeletonHeight="4"
-                w="70%"
-              />
-              <SkeletonText
-                noOfLines={1}
-                spacing="2"
-                skeletonHeight="2"
-                w="40%"
-                mt={2}
-              />
-            </Box>
-            <HStack>
-              <Skeleton height="30px" width="80px" />
-              <Skeleton height="30px" width="70px" />
-            </HStack>
-          </Flex>
+      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+        {[...Array(6)].map((_, i) => (
+          <Card key={i}>
+            <Skeleton height="150px" borderRadius="lg" />
+          </Card>
         ))}
-      </VStack>
+      </SimpleGrid>
     );
   }
 
   return (
     <Box>
       {gastosFiltrados.length === 0 ? (
-        <Text textAlign="center" mt={4}>
+        <Text textAlign="center" mt={10} fontSize="lg" color="gray.500">
           {gastos.length > 0
-            ? "Nenhum resultado encontrado."
+            ? "Nenhum resultado encontrado para os filtros aplicados."
             : "Nenhum gasto registado para este mês."}
         </Text>
       ) : (
-        <VStack spacing={4} align="stretch">
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
           {gastosFiltrados.map((gasto) => {
             const categoryColor = categoryColorMap[gasto.categoria] || "gray";
             const baseColorScheme = categoryColor.split(".")[0];
             return (
-              <Flex
+              <Card
                 key={gasto.id}
-                p={4}
                 borderWidth="1px"
                 borderRadius="lg"
-                align={{ base: "flex-start", md: "center" }}
-                justify="space-between"
                 opacity={gasto.pago ? 0.6 : 1}
-                direction={{ base: "column", md: "row" }}
+                size="sm"
+                variant="outline"
               >
-                <Box flex="1" mb={{ base: 3, md: 0 }} mr={{ md: 4 }}>
-                  <Text
-                    fontWeight="bold"
-                    noOfLines={1}
-                    textDecoration={gasto.pago ? "line-through" : "none"}
-                  >
-                    {gasto.descricao}
-                  </Text>
-                  <Text fontSize="sm" color="gray.500">
-                    {formatDate(gasto.data)}
-                  </Text>
-                </Box>
-                <HStack
-                  w={{ base: "full", md: "auto" }}
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <HStack flex="1" spacing={4}>
-                    <VStack align="flex-start" spacing={1}>
-                      <Text fontWeight="bold">R$ {gasto.valor.toFixed(2)}</Text>
-                      {gasto.dividido && (
-                        <Text fontSize="xs" color="gray.600">
-                          (R$ {(gasto.valor / 2).toFixed(2)} p/ pessoa)
-                        </Text>
-                      )}
-                      <HStack>
-                        <Tag colorScheme={baseColorScheme} size="sm">
-                          {gasto.categoria}
-                        </Tag>
-                        <Tag
-                          size="sm"
-                          variant="solid"
-                          colorScheme={gasto.pago ? "green" : "yellow"}
-                          onClick={() => handleTogglePago(gasto.id, gasto.pago)}
-                          cursor="pointer"
-                        >
-                          {gasto.pago ? "Pago" : "Pendente"}
-                        </Tag>
-                      </HStack>
-                    </VStack>
+                <CardHeader>
+                  <Flex justify="space-between" align="center">
+                    <Tooltip label={gasto.descricao} placement="top">
+                      <Heading
+                        size="md"
+                        textDecoration={gasto.pago ? "line-through" : "none"}
+                        isTruncated
+                      >
+                        {gasto.descricao}
+                      </Heading>
+                    </Tooltip>
                     <Tooltip
                       label={gasto.metodoPagamento || "À Vista"}
                       placement="top"
@@ -273,8 +240,37 @@ function ExpenseList({
                         )}
                       </Box>
                     </Tooltip>
+                  </Flex>
+                </CardHeader>
+                <CardBody pt={0}>
+                  <Text fontSize="2xl" fontWeight="bold">
+                    R$ {gasto.valor.toFixed(2)}
+                  </Text>
+                  {gasto.dividido && (
+                    <Text fontSize="xs" color="gray.500">
+                      (R$ {(gasto.valor / 2).toFixed(2)} p/ pessoa)
+                    </Text>
+                  )}
+                  <HStack mt={3}>
+                    <Tag colorScheme={baseColorScheme} size="md">
+                      {gasto.categoria}
+                    </Tag>
+                    <Tag
+                      size="md"
+                      variant="solid"
+                      colorScheme={gasto.pago ? "green" : "yellow"}
+                      onClick={() => handleTogglePago(gasto.id, gasto.pago)}
+                      cursor="pointer"
+                    >
+                      {gasto.pago ? "Pago" : "Pendente"}
+                    </Tag>
                   </HStack>
-                  <VStack>
+                </CardBody>
+                <CardFooter justify="space-between" align="center">
+                  <Text fontSize="xs" color="gray.500">
+                    {formatDate(gasto.data)}
+                  </Text>
+                  <HStack>
                     <IconButton
                       icon={<EditIcon />}
                       size="sm"
@@ -291,12 +287,12 @@ function ExpenseList({
                       onClick={() => handleDeleteClick(gasto.id)}
                       aria-label="Excluir gasto"
                     />
-                  </VStack>
-                </HStack>
-              </Flex>
+                  </HStack>
+                </CardFooter>
+              </Card>
             );
           })}
-        </VStack>
+        </SimpleGrid>
       )}
       {gastoParaEditar && (
         <EditExpenseModal

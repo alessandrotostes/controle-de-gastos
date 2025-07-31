@@ -39,8 +39,8 @@ import {
   Tag,
   Tabs,
   TabList,
-  Tab,
   TabPanels,
+  Tab,
   TabPanel,
 } from "@chakra-ui/react";
 import {
@@ -101,7 +101,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
       return;
     }
     setLoading(true);
-
     const startOfMonth = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
@@ -129,7 +128,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
       const budgetData = budgetSnap.exists()
         ? budgetSnap.data()
         : { valorTotal: 0, orcamentosPorCategoria: {} };
-
       const ganhosQuery = query(
         collection(db, "ganhos"),
         where("familiaId", "==", usuario.familiaId),
@@ -141,7 +139,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
         (acc, doc) => acc + doc.data().valor,
         0
       );
-
       const gastosQuery = query(
         collection(db, "gastos"),
         where("familiaId", "==", usuario.familiaId),
@@ -149,7 +146,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
         where("data", "<=", endTimestamp)
       );
       const gastosSnap = await getDocs(gastosQuery);
-
       let totalGastos = 0,
         totalPago = 0,
         totalDividido = 0,
@@ -176,7 +172,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
         gastosPorCategoria[gasto.categoria] =
           (gastosPorCategoria[gasto.categoria] || 0) + gasto.valor;
       });
-
       setSummaryData({
         totalGanhos,
         totalGastos,
@@ -252,10 +247,8 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
     const baseColor = color.split(".")[0];
     return `${baseColor}.500`;
   });
-
   const resolvedBackgroundColors = useToken("colors", backgroundColorsKeys);
   const resolvedBorderColors = useToken("colors", borderColorsKeys);
-
   const budgetCategoryLabels = Object.keys(summaryData.orcamentosPorCategoria);
   const budgetBackgroundColorsKeys = budgetCategoryLabels.map(
     (cat) => categoryColorMap[cat] || "gray.500"
@@ -268,7 +261,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
   budgetCategoryLabels.forEach((label, index) => {
     resolvedBudgetColorMap[label] = resolvedBudgetBackgroundColors[index];
   });
-
   const chartData = {
     labels: categoryLabels,
     datasets: [
@@ -285,25 +277,27 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
   if (loading) {
     return (
       <Box>
-        <Flex justify="center" align="center" mb={8}>
+        <Flex justify="center" align="center" mb={6}>
           <SkeletonCircle size="10" />
-          <Skeleton height="40px" width="250px" mx={4} />
+          <Skeleton height="40px" width="250px" mx={6} />
           <SkeletonCircle size="10" />
         </Flex>
-        <Skeleton height="115px" borderRadius="lg" mb={8} />
         <SimpleGrid
-          columns={{ base: 1, sm: 3 }}
+          columns={{ base: 2, md: 4 }}
           spacing={{ base: 3, md: 6 }}
           mb={8}
         >
           <Box p={4} borderWidth="1px" borderRadius="lg">
-            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="2" />
           </Box>
           <Box p={4} borderWidth="1px" borderRadius="lg">
-            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="2" />
           </Box>
           <Box p={4} borderWidth="1px" borderRadius="lg">
-            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="3" />
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="2" />
+          </Box>
+          <Box p={4} borderWidth="1px" borderRadius="lg">
+            <SkeletonText noOfLines={2} spacing="4" skeletonHeight="2" />
           </Box>
         </SimpleGrid>
         <Flex direction={{ base: "column", lg: "row" }} gap={8}>
@@ -358,8 +352,8 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
         />
       </Flex>
 
-      <Tabs variant="soft-rounded" colorScheme="blue">
-        <TabList flexWrap="wrap">
+      <Tabs variant="soft-rounded" colorScheme="blue" isLazy>
+        <TabList flexWrap="wrap" justifyContent="center">
           <Tab>Visão Geral</Tab>
           <Tab>Análise de Gastos</Tab>
           <Tab>Orçamento</Tab>
@@ -367,7 +361,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
         </TabList>
         <TabPanels>
           <TabPanel px={0} pt={6}>
-            <VStack spacing={8}>
+            <VStack spacing={6}>
               {activeGoal && (
                 <Box
                   w="full"
@@ -383,7 +377,8 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
                     <Tag colorScheme="green">Meta Ativa</Tag>
                   </Flex>
                   <Text fontSize="xl" fontWeight="bold" color="green.500">
-                    R$ {activeGoal.valorAtual.toFixed(2)}
+                    {" "}
+                    R$ {activeGoal.valorAtual.toFixed(2)}{" "}
                     {activeGoal.valorAlvo > 0 && (
                       <Text
                         as="span"
@@ -441,22 +436,25 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
               </Stat>
             </VStack>
           </TabPanel>
+
           <TabPanel px={0} pt={6}>
             <VStack spacing={8}>
               <Box w="full">
-                <Heading as="h4" size="md" mb={4}>
+                <Heading as="h4" size="md" mb={4} textAlign="center">
                   Distribuição de Gastos
                 </Heading>
                 <Box maxW="400px" mx="auto">
                   {Object.keys(summaryData.gastosPorCategoria).length > 0 ? (
                     <Doughnut data={chartData} />
                   ) : (
-                    <Text>Nenhum gasto registado para este mês.</Text>
+                    <Text textAlign="center">
+                      Nenhum gasto registado para este mês.
+                    </Text>
                   )}
                 </Box>
               </Box>
               <Box w="full">
-                <Heading as="h4" size="md" mb={4}>
+                <Heading as="h4" size="md" mb={4} textAlign="center">
                   Detalhes dos Gastos
                 </Heading>
                 <SimpleGrid
@@ -488,6 +486,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
               </Box>
             </VStack>
           </TabPanel>
+
           <TabPanel px={0} pt={6}>
             {summaryData.orcamentoTotal > 0 || hasCategoryBudgets ? (
               <Box p={4} borderWidth="1px" borderRadius="lg">
@@ -497,6 +496,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
                 <VStack spacing={4} align="stretch">
                   {summaryData.orcamentoTotal > 0 && (
                     <Box>
+                      {" "}
                       <Flex justify="space-between" mb={1}>
                         <Text fontWeight="bold">Orçamento Total</Text>
                         <Text fontSize="sm" fontWeight="bold">
@@ -507,7 +507,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
                           ).toFixed(0)}
                           %
                         </Text>
-                      </Flex>
+                      </Flex>{" "}
                       <Progress
                         value={
                           (summaryData.totalGastos /
@@ -521,7 +521,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
                             : "green"
                         }
                         borderRadius="md"
-                      />
+                      />{" "}
                     </Box>
                   )}
                   {Object.entries(summaryData.orcamentosPorCategoria)
@@ -533,13 +533,14 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
                       const specificColor = resolvedBudgetColorMap[categoria];
                       return (
                         <Box key={categoria}>
+                          {" "}
                           <Flex justify="space-between" mb={1}>
                             <Text>{categoria}</Text>
                             <Text fontSize="sm">
                               R$ {gastoCategoria.toFixed(2)} de R${" "}
                               {orcamento.toFixed(2)}
                             </Text>
-                          </Flex>
+                          </Flex>{" "}
                           <Progress
                             value={percentagem}
                             size="sm"
@@ -550,19 +551,20 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
                                   percentagem > 100 ? "red.500" : specificColor,
                               },
                             }}
-                          />
+                          />{" "}
                         </Box>
                       );
                     })}
                 </VStack>
               </Box>
             ) : (
-              <Text>
+              <Text textAlign="center">
                 Nenhum orçamento definido para este mês. Vá a Configurações para
                 adicionar.
               </Text>
             )}
           </TabPanel>
+
           <TabPanel px={0} pt={6}>
             <Box maxH={{ base: "auto", lg: "400px" }} overflowY="auto">
               <Heading as="h4" size="md" mb={4}>
@@ -603,7 +605,7 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
                   ))}
                 </VStack>
               ) : (
-                <Text>
+                <Text textAlign="center">
                   Nenhum gasto pendente para este mês. Ótimo trabalho!
                 </Text>
               )}
@@ -611,7 +613,6 @@ function SummaryDashboard({ usuario, categoryColorMap }) {
           </TabPanel>
         </TabPanels>
       </Tabs>
-
       <ContributeToGoalModal
         isOpen={isContributeOpen}
         onClose={onContributeClose}
