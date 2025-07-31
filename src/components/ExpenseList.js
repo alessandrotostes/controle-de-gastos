@@ -229,7 +229,7 @@ function ExpenseList({
                         fontSize="xl"
                         color={
                           gasto.metodoPagamento === "Cartão de Crédito"
-                            ? "blue.400"
+                            ? "purple.500"
                             : "green.400"
                         }
                       >

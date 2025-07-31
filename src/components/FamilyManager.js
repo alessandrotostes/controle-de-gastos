@@ -75,7 +75,8 @@ function FamilyManager({ usuario }) {
 
       toast({
         title: `Convite enviado para ${inviteEmail}!`,
-        description: "Peça ao utilizador para fazer login.",
+        description:
+          "Contate o admnistrador do app para liberação do novo familiar convidado.",
         status: "success",
         duration: 5000,
       });

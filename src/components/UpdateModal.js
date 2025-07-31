@@ -22,7 +22,7 @@ import { CheckCircleIcon } from "@chakra-ui/icons";
 
 // --- CONTROLO DA VERSÃO ---
 // Versão 2.0.0 para refletir a grande atualização do sistema de família e outras melhorias.
-export const APP_VERSION = "2.0.1";
+export const APP_VERSION = "2.0.3";
 
 function UpdateModal({ isOpen, onClose }) {
   const handleClose = () => {
