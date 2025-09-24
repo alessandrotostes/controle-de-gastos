@@ -1,9 +1,10 @@
 # 💰 App de Controle de Gastos  
 ![License](https://img.shields.io/badge/license-MIT-green)  
-![Status](https://img.shields.io/badge/status-em%20desenvolvimento-blue)  
+![Status](https://img.shields.io/badge/status-em%20desenvolvimento/mvp-blue)  
 ![PRs](https://img.shields.io/badge/PRs-bem%20vindos-orange)  
 
 Um aplicativo de **gestão de finanças pessoais e familiares**, desenvolvido para ajudar usuários a controlar **gastos, ganhos, orçamentos e investimentos** de forma simples e eficiente.  
+Feito única e exclusivamente para uso pessoal.
 
 ---
 
