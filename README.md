@@ -43,10 +43,3 @@ Feito única e exclusivamente para uso pessoal.
 - **Backend:** Node.js / Express  
 - **Banco de Dados:** Firebase / PostgreSQL / MongoDB  
 
----
-
-## 📦 Instalação  
-
-Clone o repositório:  
-```bash
-git clone https://github.com/seu-usuario/nome-do-repo.git
